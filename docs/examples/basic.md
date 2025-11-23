@@ -4,33 +4,59 @@ This page provides basic examples for getting started with the GoPro SDK.
 
 ## Simple Connection
 
-The most basic example - connect to a camera and check its status:
+!!! example "Basic Camera Connection"
 
-```python
-import asyncio
-from gopro_sdk import GoProClient
+    === "With Context Manager (Recommended)"
 
-async def main():
-    # Create client with last 4 digits of camera name
-    client = GoProClient(identifier="1234")
+        ```python
+        import asyncio
+        from gopro_sdk import GoProClient
 
-    try:
-        # Connect via BLE
-        await client.open_ble()
-        print("Connected to camera")
+        async def main():
+            # Create client with last 4 digits of camera name
+            async with GoProClient(target="1234", offline_mode=False) as client:
+                print("Connected to camera")
 
-        # Get camera status
-        status = await client.get_camera_state()
-        print(f"Battery: {status.get('battery_percent')}%")
-        print(f"Recording: {status.get('is_recording')}")
+                # Get camera status
+                status = await client.get_camera_state()
+                print(f"Battery: {status.get('battery_percent')}%")
+                print(f"Recording: {status.get('is_recording')}")
+                # Connection closed automatically
 
-    finally:
-        # Always close the connection
-        await client.close()
+        if __name__ == "__main__":
+            asyncio.run(main())
+        ```
 
-if __name__ == "__main__":
-    asyncio.run(main())
-```
+    === "Manual Connection"
+
+        ```python
+        import asyncio
+        from gopro_sdk import GoProClient
+
+        async def main():
+            # Create client with last 4 digits of camera name
+            client = GoProClient(target="1234", offline_mode=False)
+
+            try:
+                # Connect via BLE
+                await client.open_ble()
+                print("Connected to camera")
+
+                # Get camera status
+                status = await client.get_camera_state()
+                print(f"Battery: {status.get('battery_percent')}%")
+                print(f"Recording: {status.get('is_recording')}")
+
+            finally:
+                # Always close the connection
+                await client.close()
+
+        if __name__ == "__main__":
+            asyncio.run(main())
+        ```
+
+    !!! warning "Parameter Names"
+        Use `target` (not `identifier`) and `offline_mode` (not `offline`) as parameter names.
 
 ## Recording Video
 

@@ -18,37 +18,66 @@ This project uses modern Python tooling:
 
 ### Clone and Setup
 
-```bash
-# Clone the repository
-git clone https://github.com/sean2077/gopro-sdk-py.git
-cd gopro-sdk-py
+=== "Using uv (Recommended)"
 
-# Using uv (recommended)
-uv sync --extra dev
+    ```bash
+    # Clone the repository
+    git clone https://github.com/sean2077/gopro-sdk-py.git
+    cd gopro-sdk-py
 
-# Install pre-commit hooks (optional)
-pre-commit install
-```
+    # Install dependencies
+    uv sync --extra dev
+
+    # Install pre-commit hooks (optional)
+    pre-commit install
+    ```
+
+    !!! tip
+        uv is significantly faster than pip for dependency resolution and installation.
+
+=== "Using pip"
+
+    ```bash
+    # Clone the repository
+    git clone https://github.com/sean2077/gopro-sdk-py.git
+    cd gopro-sdk-py
+
+    # Create virtual environment
+    python -m venv .venv
+    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+    # Install dependencies
+    pip install -e ".[dev]"
+
+    # Install pre-commit hooks (optional)
+    pre-commit install
+    ```
 
 ## Development Workflow
 
 ### Common Tasks
 
-```bash
-poe format  # Format code and organize imports
-poe lint    # Check code style
-poe test    # Run tests
-poe docs    # Start documentation server (http://localhost:8000)
-```
+=== "Using poe (Task Runner)"
 
-Or use tools directly:
+    ```bash
+    poe format  # Format code and organize imports
+    poe lint    # Check code style
+    poe test    # Run tests
+    poe docs    # Start documentation server (http://localhost:8000)
+    ```
 
-```bash
-ruff format .              # Format code
-ruff check .               # Lint code
-pytest                     # Run tests
-uv run mkdocs serve        # Serve documentation
-```
+=== "Using Tools Directly"
+
+    ```bash
+    ruff format .              # Format code
+    ruff check .               # Lint code
+    pytest                     # Run tests
+    uv run mkdocs serve        # Serve documentation
+    ```
+
+!!! tip "Quick Commands"
+    - ++ctrl+shift+p++ in VS Code → "Run Task" → Select task
+    - Use `poe --help` to see all available tasks
 
 ### Code Style
 

@@ -2,13 +2,15 @@
 
 ## Design Philosophy
 
-The gopro-sdk-py is built on three core principles:
+!!! abstract "Core Principles"
+    The gopro-sdk-py is built on three core principles:
 
-1. **Separation of Concerns**: Each component has a single, well-defined responsibility
-2. **Composition over Inheritance**: Flexibility through component assembly rather than class hierarchies
-3. **Explicit over Implicit**: Clear, predictable behavior with no hidden magic
+    1. :material-puzzle-outline: **Separation of Concerns** - Each component has a single, well-defined responsibility
+    2. :material-puzzle: **Composition over Inheritance** - Flexibility through component assembly rather than class hierarchies
+    3. :material-eye-check: **Explicit over Implicit** - Clear, predictable behavior with no hidden magic
 
-**Protocol Foundation**: This SDK implements the [OpenGoPro](https://github.com/gopro/OpenGoPro) protocol specifications and reuses OpenGoPro's protobuf definitions and constants. For detailed protocol documentation, refer to the [official OpenGoPro documentation](https://gopro.github.io/OpenGoPro/).
+!!! info "Protocol Foundation"
+    This SDK implements the [OpenGoPro](https://github.com/gopro/OpenGoPro) protocol specifications and reuses OpenGoPro's protobuf definitions and constants. For detailed protocol documentation, refer to the [official OpenGoPro documentation](https://gopro.github.io/OpenGoPro/).
 
 ## Layered Architecture
 

@@ -1,43 +1,61 @@
 # API Reference
 
-The GoPro SDK provides a comprehensive API for controlling GoPro cameras. This reference documentation is automatically generated from the source code docstrings.
+!!! info "Auto-Generated Documentation"
+    This reference documentation is automatically generated from source code docstrings using [mkdocstrings](https://mkdocstrings.github.io/).
 
 ## Main Components
 
-### Client API
-The [`GoProClient`](client.md) class provides the main interface for controlling a single camera.
+<div class="grid cards" markdown>
 
-### Multi-Camera Management
-The [`MultiCameraManager`](multi-camera.md) class enables efficient concurrent control of multiple cameras.
+-   :material-camera:{ .lg } **[GoProClient](client.md)**
 
-### Commands
-Various command classes for different protocols and operations:
+    ---
 
-- [BLE Commands](commands.md#ble-commands)
-- [HTTP Commands](commands.md#http-commands)
-- [Media Commands](commands.md#media-commands)
-- [Webcam Commands](commands.md#webcam-commands)
+    Main interface for controlling a single GoPro camera
 
-### Connection Management
-Connection lifecycle and health monitoring:
+    [:octicons-arrow-right-24: Client API](client.md)
 
-- [BLE Connection Manager](connection.md#ble-connection-manager)
-- [HTTP Connection Manager](connection.md#http-connection-manager)
-- [Health Check Mixin](connection.md#health-check-mixin)
+-   :material-camera-burst:{ .lg } **[MultiCameraManager](multi-camera.md)**
 
-### Configuration
-Configuration and credential management:
+    ---
 
-- [TimeoutConfig](config.md#timeoutconfig)
-- [CohnConfigManager](config.md#cohnconfigmanager)
-- [CohnCredentials](config.md#cohncredentials)
+    Efficient concurrent control of multiple cameras
 
-### Exceptions
-Comprehensive exception hierarchy for error handling:
+    [:octicons-arrow-right-24: Multi-Camera API](multi-camera.md)
 
-- [Base Exceptions](exceptions.md#base-exceptions)
-- [Connection Exceptions](exceptions.md#connection-exceptions)
-- [Configuration Exceptions](exceptions.md#configuration-exceptions)
+-   :material-console:{ .lg } **[Commands](commands.md)**
+
+    ---
+
+    BLE, HTTP, Media, and Webcam command interfaces
+
+    [:octicons-arrow-right-24: Commands API](commands.md)
+
+-   :material-connection:{ .lg } **[Connection](connection.md)**
+
+    ---
+
+    BLE and HTTP connection management with health checks
+
+    [:octicons-arrow-right-24: Connection API](connection.md)
+
+-   :material-cog:{ .lg } **[Configuration](config.md)**
+
+    ---
+
+    Timeout settings and COHN credential management
+
+    [:octicons-arrow-right-24: Config API](config.md)
+
+-   :material-alert-circle:{ .lg } **[Exceptions](exceptions.md)**
+
+    ---
+
+    Comprehensive exception hierarchy for error handling
+
+    [:octicons-arrow-right-24: Exceptions API](exceptions.md)
+
+</div>
 
 ## Quick Navigation
 

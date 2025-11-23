@@ -2,55 +2,33 @@
 
 A production-ready Python SDK for controlling GoPro cameras, specifically designed and optimized for multi-camera COHN (Camera on Home Network) scenarios.
 
-## Overview
+<div class="grid cards" markdown>
 
-This SDK addresses critical limitations in the official OpenGoPro SDK, providing:
+-   :material-camera-burst:{ .lg } **Multi-Camera Ready**
 
-- **Multi-Camera Support**: Efficient concurrent control of multiple GoPro cameras
-- **Persistent COHN Configuration**: Save and restore COHN settings without reconfiguration
-- **Optimized Connection Management**: Eliminate unnecessary connection cycles and resource waste
-- **Robust State Tracking**: Accurate connection state management for COHN mode
-- **Production-Ready Error Handling**: Comprehensive exception handling and recovery mechanisms
+    ---
 
-## Quick Example
+    Efficiently control multiple GoPro cameras concurrently with optimized connection management
 
-```python
-import asyncio
-from gopro_sdk import GoProClient
+-   :material-flash:{ .lg } **Production-Ready**
 
-async def main():
-    client = GoProClient(identifier="1234")
+    ---
 
-    await client.open_ble()
-    await client.configure_cohn(ssid="your-wifi", password="password")
-    await client.wait_cohn_ready(timeout=30)
+    Comprehensive error handling, retry mechanisms, and robust state tracking
 
-    # Start recording
-    await client.set_shutter(on=True)
-    await asyncio.sleep(5)
-    await client.set_shutter(on=False)
+-   :material-cog:{ .lg } **Persistent Config**
 
-    await client.close()
+    ---
 
-asyncio.run(main())
-```
+    Save and restore COHN settings without reconfiguration every time
 
-## Installation
+-   :material-language-python:{ .lg } **Type-Safe**
 
-```bash
-uv add gopro-sdk-py
-# Or use pip
-pip install gopro-sdk-py
-```
+    ---
 
-For development setup and alternative installation methods, see the [Quick Start Guide](quickstart.md#installation).
+    Full type hints for excellent IDE support and fewer runtime errors
 
-## Key Features
-
-- **Multi-Camera Control** - Concurrent management of multiple cameras with `MultiCameraManager`
-- **Persistent Configuration** - Save and reuse COHN settings with `CohnConfigManager`
-- **Type-Safe API** - Full type hints for better IDE support
-- **Production-Ready** - Comprehensive error handling and retry mechanisms
+</div>
 
 ## Documentation
 
@@ -60,15 +38,15 @@ For development setup and alternative installation methods, see the [Quick Start
 
     ---
 
-    Get up and running in minutes with installation and basic usage examples.
+    Get up and running in minutes with installation and basic usage examples
 
-    [:octicons-arrow-right-24: Quick Start](quickstart.md)
+    [:octicons-arrow-right-24: Getting Started](quickstart.md)
 
 -   :material-help-circle:{ .lg .middle } **Why This SDK?**
 
     ---
 
-    Understand the rationale and advantages over the official OpenGoPro SDK.
+    Understand the rationale and advantages over the official OpenGoPro SDK
 
     [:octicons-arrow-right-24: Learn More](why-this-sdk.md)
 
@@ -76,32 +54,16 @@ For development setup and alternative installation methods, see the [Quick Start
 
     ---
 
-    Complete API documentation auto-generated from source code.
+    Complete API documentation auto-generated from source code
 
     [:octicons-arrow-right-24: API Docs](api/overview.md)
 
--   :material-github:{ .lg .middle } **Development**
+-   :material-github:{ .lg .middle } **Contributing**
 
     ---
 
-    Contributing guidelines and development setup instructions.
+    Contributing guidelines and development setup instructions
 
     [:octicons-arrow-right-24: Contribute](development.md)
 
 </div>
-
-## Requirements
-
-- Python 3.12 or higher
-- Windows, macOS, or Linux
-- Bluetooth adapter (for BLE connection)
-- Network connectivity (for COHN mode)
-
-## Support
-
-- [GitHub Issues](https://github.com/sean2077/gopro-sdk-py/issues) - Bug reports and feature requests
-- [GitHub Discussions](https://github.com/sean2077/gopro-sdk-py/discussions) - Questions and community discussion
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](https://github.com/sean2077/gopro-sdk-py/blob/main/LICENSE) file for details.

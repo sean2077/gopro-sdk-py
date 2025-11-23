@@ -11,21 +11,28 @@ This guide will help you get started with the GoPro SDK for Python in just a few
 
 ## Installation
 
-### From PyPI
+=== "Using uv (Recommended)"
 
-```bash
-uv add gopro-sdk-py
-# Or use pip
-pip install gopro-sdk-py
-```
+    ```bash
+    uv add gopro-sdk-py
+    ```
 
-### From Source
+    !!! tip "Why uv?"
+        [uv](https://github.com/astral-sh/uv) is a fast Python package installer and resolver, significantly faster than pip.
 
-```bash
-git clone https://github.com/sean2077/gopro-sdk-py.git
-cd gopro-sdk-py
-uv sync
-```
+=== "Using pip"
+
+    ```bash
+    pip install gopro-sdk-py
+    ```
+
+=== "From Source"
+
+    ```bash
+    git clone https://github.com/sean2077/gopro-sdk-py.git
+    cd gopro-sdk-py
+    uv sync
+    ```
 
 ## Your First Connection
 
@@ -145,33 +152,49 @@ asyncio.run(main())
 
 ## Common Operations
 
-### Take a Photo
+!!! example "Take a Photo"
 
-```python
-await client.set_shutter(on=True)
-```
+    ```python
+    await client.set_shutter(on=True)
+    ```
 
-### Start/Stop Video Recording
+!!! example "Start/Stop Video Recording"
 
-```python
-# Start recording
-await client.set_shutter(on=True)
+    === "Basic"
 
-# Record for 10 seconds
-await asyncio.sleep(10)
+        ```python
+        # Start recording
+        await client.set_shutter(on=True)
 
-# Stop recording
-await client.set_shutter(on=False)
-```
+        # Record for 10 seconds
+        await asyncio.sleep(10)
 
-### Check Camera Status
+        # Stop recording
+        await client.set_shutter(on=False)
+        ```
 
-```python
-status = await client.get_camera_state()
-print(f"Battery: {status.get('battery_percent')}%")
-print(f"Recording: {status.get('is_recording')}")
-print(f"SD Space: {status.get('space_remaining')} MB")
-```
+    === "With Context Manager"
+
+        ```python
+        async with GoProClient(target="1234") as client:
+            # Start recording
+            await client.start_recording()
+            await asyncio.sleep(10)
+            await client.stop_recording()
+            # Connection closed automatically
+        ```
+
+!!! example "Check Camera Status"
+
+    ```python
+    status = await client.get_camera_state()
+    print(f"Battery: {status.get('battery_percent')}%")
+    print(f"Recording: {status.get('is_recording')}")
+    print(f"SD Space: {status.get('space_remaining')} MB")
+    ```
+
+    !!! info "Requires Online Mode"
+        This operation requires WiFi connection. Make sure COHN is configured or use `offline_mode=False`.
 
 ### Set Video Resolution
 
@@ -233,25 +256,22 @@ asyncio.run(main())
 
 ## Troubleshooting
 
-### Camera Not Found
+!!! warning "Camera Not Found"
+    - Make sure Bluetooth is enabled on your computer
+    - Ensure the camera is in pairing mode
+    - Try moving closer to the camera
+    - Check that no other app is connected to the camera
 
-- Make sure Bluetooth is enabled on your computer
-- Ensure the camera is in pairing mode
-- Try moving closer to the camera
-- Check that no other app is connected to the camera
+!!! bug "Connection Timeout"
+    - Increase timeout values in TimeoutConfig
+    - Check WiFi signal strength for COHN
+    - Restart the camera
+    - Try reconnecting
 
-### Connection Timeout
-
-- Increase timeout values in TimeoutConfig
-- Check WiFi signal strength for COHN
-- Restart the camera
-- Try reconnecting
-
-### Import Errors
-
-- Make sure you've installed the package: `uv sync`
-- Check that you're using Python 3.12 or higher
-- Try reinstalling dependencies: `uv sync --reinstall`
+!!! failure "Import Errors"
+    - Make sure you've installed the package: `uv sync`
+    - Check that you're using Python 3.12 or higher
+    - Try reinstalling dependencies: `uv sync --reinstall`
 
 ## Next Steps
 

@@ -1,12 +1,35 @@
 # COHN Configuration Examples
 
-Examples for managing COHN (Camera on Home Network) configuration.
+<div class="grid cards" markdown>
+
+-   :material-wifi:{ .lg } **COHN Setup**
+
+    ---
+
+    Configure Camera on Home Network for faster WiFi-based control
+
+-   :material-content-save:{ .lg } **Persistent Config**
+
+    ---
+
+    Save and reuse COHN settings to avoid reconfiguration
+
+-   :material-sync:{ .lg } **Auto-Reconnect**
+
+    ---
+
+    Handle network issues with automatic reconnection
+
+</div>
+
+!!! info "What is COHN?"
+    COHN (Camera on Home Network) allows the camera to connect to your WiFi network, enabling faster HTTP-based communication instead of slower BLE commands.
 
 ## Basic COHN Setup
 
-Configure a camera for COHN mode:
+!!! example "Configure COHN for the First Time"
 
-```python
+    ```python
 import asyncio
 from gopro_sdk import GoProClient
 

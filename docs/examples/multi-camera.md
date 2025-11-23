@@ -1,12 +1,44 @@
 # Multi-Camera Examples
 
-Examples for controlling multiple GoPro cameras simultaneously.
+<div class="grid cards" markdown>
+
+-   :material-camera-burst:{ .lg } **Concurrent Control**
+
+    ---
+
+    Control multiple cameras simultaneously with `MultiCameraManager`
+
+-   :material-sync:{ .lg } **Synchronized Recording**
+
+    ---
+
+    Start/stop recording on all cameras at the same time
+
+-   :material-download:{ .lg } **Batch Operations**
+
+    ---
+
+    Download media from all cameras efficiently
+
+-   :material-chart-timeline:{ .lg } **Status Monitoring**
+
+    ---
+
+    Monitor battery, storage, and recording status across cameras
+
+</div>
+
+!!! tip "Multi-Camera Best Practices"
+    - Use COHN mode for faster communication
+    - Save configurations to reduce startup time
+    - Monitor connection health with health checks
+    - Use batch operations for efficiency
 
 ## Basic Multi-Camera Setup
 
-Connect and control multiple cameras:
+!!! example "Connect and Control Multiple Cameras"
 
-```python
+    ```python
 import asyncio
 from gopro_sdk import MultiCameraManager
 

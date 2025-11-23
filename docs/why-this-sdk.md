@@ -25,58 +25,64 @@ Our use case requires:
 
 While the official OpenGoPro Python SDK provides excellent protocol documentation and reference implementation, it has limitations for production multi-camera scenarios:
 
-### 1. Unreliable COHN Configuration Persistence
+!!! bug "1. Unreliable COHN Configuration Persistence"
+    While the official SDK provides COHN provisioning status APIs, the configuration persistence is unreliable in practice. Cameras often fail to retain settings after power cycles or network changes, requiring frequent reconfiguration that wastes time and drains batteries.
 
-While the official SDK provides COHN provisioning status APIs, the configuration persistence is unreliable in practice. Cameras often fail to retain settings after power cycles or network changes, requiring frequent reconfiguration that wastes time and drains batteries.
+!!! warning "2. Inefficient Connection Flow"
+    The SDK requires a redundant connection cycle:
 
-### 2. Inefficient Connection Flow
+    1. Connect via BLE to configure COHN
+    2. Close the connection
+    3. Reopen with COHN mode
 
-The SDK requires a redundant connection cycle:
-1. Connect via BLE to configure COHN
-2. Close the connection
-3. Reopen with COHN mode
+    This adds 3-4 seconds per camera. With 10 cameras, that's ==30-40 seconds== of unnecessary startup time.
 
-This adds 3-4 seconds per camera. With 10 cameras, that's 30-40 seconds of unnecessary startup time.
+!!! failure "3. Runtime State Management Issues"
+    The internal `_is_cohn_configured` flag isn't updated at runtime, causing `is_http_connected` to return incorrect state after COHN configuration. The only workaround is to close and reopen the connection.
 
-### 3. Runtime State Management Issues
+!!! question "4. Complex State Machine"
+    The SDK attempts to support all connection modes (BLE/WiFi/COHN/Wired) with a complex state machine. This makes it difficult to optimize for specific scenarios and troubleshoot issues in production.
 
-The internal `_is_cohn_configured` flag isn't updated at runtime, causing `is_http_connected` to return incorrect state after COHN configuration. The only workaround is to close and reopen the connection.
-
-### 4. Complex State Machine
-
-The SDK attempts to support all connection modes (BLE/WiFi/COHN/Wired) with a complex state machine. This makes it difficult to optimize for specific scenarios and troubleshoot issues in production.
-
-### 5. Limited Multi-Camera Support
-
-Designed primarily for single-camera use. Concurrent control of multiple cameras requires careful workarounds and manual resource management.
+!!! note "5. Limited Multi-Camera Support"
+    Designed primarily for single-camera use. Concurrent control of multiple cameras requires careful workarounds and manual resource management.
 
 ## Our Solution
 
-### Core Improvements
+<div class="grid cards" markdown>
 
-**1. Persistent COHN Configuration**
+-   :material-content-save:{ .lg } **Persistent COHN Configuration**
 
-- Save camera WiFi settings locally with `CohnConfigManager`
-- Automatic configuration reuse on reconnection
-- Reduce startup time and battery consumption
+    ---
 
-**2. Streamlined Connection Flow**
+    - Save camera WiFi settings locally with `CohnConfigManager`
+    - Automatic configuration reuse on reconnection
+    - Reduce startup time and battery consumption
 
-- Single-step connection process for COHN mode
-- Maintain long-lived BLE and HTTP connections
-- Accurate runtime state tracking
+-   :material-lightning-bolt:{ .lg } **Streamlined Connection Flow**
 
-**3. Multi-Camera Focused Design**
+    ---
 
-- `MultiCameraManager` for concurrent control
-- Efficient resource sharing across cameras
-- Batch operations support
+    - Single-step connection process for COHN mode
+    - Maintain long-lived BLE and HTTP connections
+    - Accurate runtime state tracking
 
-**4. Clean Architecture**
+-   :material-camera-burst:{ .lg } **Multi-Camera Focused Design**
 
-- Modular design with clear separation of concerns
-- Type-safe API with comprehensive type hints
-- Consistent error handling with custom exceptions
+    ---
+
+    - `MultiCameraManager` for concurrent control
+    - Efficient resource sharing across cameras
+    - Batch operations support
+
+-   :material-puzzle:{ .lg } **Clean Architecture**
+
+    ---
+
+    - Modular design with clear separation of concerns
+    - Type-safe API with comprehensive type hints
+    - Consistent error handling with custom exceptions
+
+</div>
 
 ## Architecture Comparison
 
@@ -108,16 +114,28 @@ Modular, layered architecture
     └── TimeoutConfig
 ```
 
-## Key Improvements
+## Feature Comparison
 
-1. **Persistent COHN**: Save and restore COHN configuration without reconfiguration
-2. **Efficient Connection Management**: No unnecessary connection cycles or resource waste
-3. **Proper State Tracking**: Accurate connection state management for COHN mode
-4. **Multi-Camera Optimized**: Designed from the ground up for concurrent camera control
-5. **Safe Network Handling**: No unintended WiFi disconnections
-6. **Clear API**: Simple, predictable interface with consistent error handling
-7. **Type Safety**: Full type hints for better IDE support and early error detection
-8. **Production Ready**: Tested in real-world multi-camera scenarios
+| Feature                   | OpenGoPro SDK | gopro-sdk-py            |
+| ------------------------- | ------------- | ----------------------- |
+| Persistent COHN Config    | :x:           | :white_check_mark:      |
+| Single-step Connection    | :x:           | :white_check_mark:      |
+| Accurate State Tracking   | :x:           | :white_check_mark:      |
+| Multi-Camera Manager      | :x:           | :white_check_mark:      |
+| Type Hints                | Partial       | :white_check_mark: Full |
+| Async Context Manager     | :x:           | :white_check_mark:      |
+| Production-Ready          | Research      | :white_check_mark:      |
+| Startup Time (10 cameras) | ~40s          | ~10s                    |
+
+!!! success "Key Improvements"
+    - [x] **Persistent COHN** - Save and restore COHN configuration without reconfiguration
+    - [x] **Efficient Connection Management** - No unnecessary connection cycles or resource waste
+    - [x] **Proper State Tracking** - Accurate connection state management for COHN mode
+    - [x] **Multi-Camera Optimized** - Designed from the ground up for concurrent camera control
+    - [x] **Safe Network Handling** - No unintended WiFi disconnections
+    - [x] **Clear API** - Simple, predictable interface with consistent error handling
+    - [x] **Type Safety** - Full type hints for better IDE support and early error detection
+    - [x] **Production Ready** - Tested in real-world multi-camera scenarios
 
 ## Use Cases
 
