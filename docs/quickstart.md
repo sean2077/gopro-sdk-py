@@ -14,6 +14,8 @@ This guide will help you get started with the GoPro SDK for Python in just a few
 ### From PyPI
 
 ```bash
+uv add gopro-sdk-py
+# Or use pip
 pip install gopro-sdk-py
 ```
 
@@ -22,7 +24,7 @@ pip install gopro-sdk-py
 ```bash
 git clone https://github.com/sean2077/gopro-sdk-py.git
 cd gopro-sdk-py
-pip install -e .
+uv sync
 ```
 
 ## Your First Connection
@@ -244,9 +246,9 @@ asyncio.run(main())
 
 ### Import Errors
 
-- Make sure you've installed the package: `pip install -e .`
-- Check that you're using Python 3.9 or higher
-- Try reinstalling dependencies: `pip install -r requirements.txt`
+- Make sure you've installed the package: `uv sync`
+- Check that you're using Python 3.12 or higher
+- Try reinstalling dependencies: `uv sync --reinstall`
 
 ## Next Steps
 

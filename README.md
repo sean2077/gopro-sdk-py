@@ -15,6 +15,8 @@ See [Why This SDK?](https://sean2077.github.io/gopro-sdk-py/why-this-sdk/) for d
 ## Quick Start
 
 ```bash
+uv add gopro-sdk-py
+# Or use pip
 pip install gopro-sdk-py
 ```
 

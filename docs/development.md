@@ -26,11 +26,6 @@ cd gopro-sdk-py
 # Using uv (recommended)
 uv sync --extra dev
 
-# Or using pip
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-pip install -e ".[dev]"
-
 # Install pre-commit hooks (optional)
 pre-commit install
 ```
@@ -356,8 +351,8 @@ Documentation is in Markdown format in `docs/` directory.
 ### Import Errors
 
 ```bash
-# Reinstall in development mode
-pip install -e ".[dev]"
+# Reinstall dependencies
+uv sync --reinstall
 ```
 
 ### Pre-commit Hooks Failing

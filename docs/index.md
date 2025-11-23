@@ -38,6 +38,8 @@ asyncio.run(main())
 ## Installation
 
 ```bash
+uv add gopro-sdk-py
+# Or use pip
 pip install gopro-sdk-py
 ```
 

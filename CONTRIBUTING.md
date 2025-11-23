@@ -5,7 +5,7 @@ Thank you for your interest in contributing! For detailed technical information,
 ## Quick Start
 
 1. Fork and clone the repository
-2. Install dependencies: `uv sync --extra dev` (or `pip install -e ".[dev]"`)
+2. Install dependencies: `uv sync --extra dev`
 3. Make your changes
 4. Run checks: `poe format && poe lint && poe test`
 5. Submit a pull request
