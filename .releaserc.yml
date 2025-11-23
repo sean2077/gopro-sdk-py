@@ -11,13 +11,11 @@ plugins:
     - presetConfig:
         types:
           - type: "fix"
-            section: "Bug Fixes"
+            section: "Fixes"
           - type: "feat"
             section: "Features"
           - type: "perf"
             section: "Performance Improvements"
-          - type: "docs"
-            section: "Documentation"
   - - "@semantic-release/changelog"
     - changelogFile: CHANGELOG.md
   - - "@semantic-release/exec"
