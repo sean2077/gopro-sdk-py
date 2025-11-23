@@ -4,7 +4,7 @@ This guide will help you get started with the GoPro SDK for Python in just a few
 
 ## Prerequisites
 
-- Python 3.10 or higher
+- Python 3.12 or higher
 - GoPro camera (HERO 9 or later recommended)
 - Bluetooth adapter on your computer
 - WiFi network for COHN mode

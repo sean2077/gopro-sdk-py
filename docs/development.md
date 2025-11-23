@@ -12,7 +12,7 @@ This project uses modern Python tooling:
 
 ### Prerequisites
 
-- Python 3.10 or higher
+- Python 3.12 or higher
 - Git
 - [uv](https://docs.astral.sh/uv/) (recommended) or pip
 
@@ -319,7 +319,7 @@ npx semantic-release --dry-run
 
 **CI Workflow** (`.github/workflows/ci.yml`):
 - Runs on push and PR
-- Tests on multiple Python versions (3.10-3.13)
+- Tests on multiple Python versions (3.12-3.13)
 - Tests on multiple OS (Ubuntu, Windows, macOS)
 - Linting and type checking
 - Coverage reporting

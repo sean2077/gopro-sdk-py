@@ -90,7 +90,7 @@ For development setup and alternative installation methods, see the [Quick Start
 
 ## Requirements
 
-- Python 3.10 or higher
+- Python 3.12 or higher
 - Windows, macOS, or Linux
 - Bluetooth adapter (for BLE connection)
 - Network connectivity (for COHN mode)
