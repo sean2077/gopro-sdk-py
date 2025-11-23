@@ -52,13 +52,13 @@ from gopro_sdk.exceptions import (
 async def safe_connection():
     """Handle connection errors gracefully."""
     client = GoProClient(identifier="1234")
-    
+
     try:
         await client.open_ble()
     except BleConnectionError as e:
         print(f"Failed to connect via BLE: {e}")
         return
-    
+
     try:
         await client.configure_cohn("wifi", "password")
         await client.wait_cohn_ready()
@@ -70,7 +70,7 @@ async def safe_connection():
         print(f"HTTP connection failed: {e}")
         await client.close()
         return
-    
+
     # Successfully connected
     print("Camera ready")
     await client.close()
@@ -85,7 +85,7 @@ async def connect_with_retry(
 ):
     """Connect with automatic retry on failure."""
     from gopro_sdk.exceptions import BleConnectionError
-    
+
     for attempt in range(max_retries):
         try:
             await client.open_ble()
@@ -114,24 +114,24 @@ async def robust_multi_camera():
         "cam2": "5678",
         "cam3": "9012",
     }
-    
+
     # Track failed cameras
     failed = []
-    
+
     try:
         await manager.connect_all(cameras, "wifi", "password")
     except GoproSdkError as e:
         print(f"Some cameras failed to connect: {e}")
-        
+
         # Check individual camera status
         for cam_id, client in manager.clients.items():
             if client is None:
                 failed.append(cam_id)
-    
+
     if failed:
         print(f"Failed cameras: {', '.join(failed)}")
         # Continue with successfully connected cameras
-    
+
     # Execute commands only on connected cameras
     try:
         await manager.execute_all("set_shutter", on=True)
@@ -150,7 +150,7 @@ from gopro_sdk.exceptions import GoproSdkError
 async def gopro_session(identifier: str):
     """Safe camera session with automatic cleanup."""
     client = GoProClient(identifier=identifier)
-    
+
     try:
         await client.open_ble()
         yield client

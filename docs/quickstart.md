@@ -42,16 +42,16 @@ from gopro_sdk import GoProClient
 async def main():
     # Replace "1234" with your camera's identifier
     client = GoProClient(identifier="1234")
-    
+
     try:
         print("Connecting to camera...")
         await client.open_ble()
         print("Connected successfully!")
-        
+
         # Get camera status
         status = await client.get_camera_state()
         print(f"Battery: {status.get('battery_percent')}%")
-        
+
     finally:
         await client.close()
 
@@ -74,26 +74,26 @@ from gopro_sdk import GoProClient
 
 async def main():
     client = GoProClient(identifier="1234")
-    
+
     try:
         # Connect via BLE first
         await client.open_ble()
-        
+
         # Configure COHN
         await client.configure_cohn(
             ssid="YourWiFiName",
             password="YourWiFiPassword"
         )
-        
+
         # Wait for COHN to be ready
         await client.wait_cohn_ready(timeout=30)
         print("COHN is ready!")
-        
+
         # Now you can use faster HTTP commands
         await client.set_shutter(on=True)  # Start recording
         await asyncio.sleep(5)
         await client.set_shutter(on=False)  # Stop recording
-        
+
     finally:
         await client.close()
 
@@ -111,13 +111,13 @@ from gopro_sdk import GoProClient, CohnConfigManager
 async def main():
     client = GoProClient(identifier="1234")
     config_manager = CohnConfigManager()
-    
+
     # Try to load saved config
     saved_config = config_manager.load_config("1234")
-    
+
     try:
         await client.open_ble()
-        
+
         if saved_config:
             print("Using saved configuration...")
             await client.apply_cohn_config(saved_config)
@@ -128,10 +128,10 @@ async def main():
                 password="YourWiFiPassword"
             )
             config_manager.save_config("1234", config)
-        
+
         await client.wait_cohn_ready()
         print("Ready to go!")
-        
+
     finally:
         await client.close()
 
@@ -204,22 +204,22 @@ async def main():
         "cam1": "1234",
         "cam2": "5678",
     }
-    
+
     manager = MultiCameraManager()
-    
+
     try:
         # Connect all cameras
         await manager.connect_all(cameras)
-        
+
         # Start recording on all cameras
         await manager.execute_all("set_shutter", on=True)
-        
+
         # Wait a bit
         await asyncio.sleep(10)
-        
+
         # Stop all cameras
         await manager.execute_all("set_shutter", on=False)
-        
+
     finally:
         await manager.disconnect_all()
 

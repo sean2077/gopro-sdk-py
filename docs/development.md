@@ -161,13 +161,13 @@ If adding a new camera command:
 class HttpCommands:
     async def new_command(self, param: str) -> dict:
         """Execute new command.
-        
+
         Args:
             param: Command parameter
-            
+
         Returns:
             Command result
-            
+
         Raises:
             HttpCommandError: If command fails
         """
@@ -185,10 +185,10 @@ Add convenience method to `GoProClient`:
 class GoProClient:
     async def new_feature(self, param: str) -> dict:
         """New feature description.
-        
+
         Args:
             param: Parameter description
-            
+
         Returns:
             Result description
         """

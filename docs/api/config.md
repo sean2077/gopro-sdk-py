@@ -49,12 +49,12 @@ async def use_saved_config():
     """Use saved COHN configuration."""
     client = GoProClient(identifier="1234")
     config_mgr = CohnConfigManager()
-    
+
     # Try to load saved config
     saved_config = config_mgr.load_config("1234")
-    
+
     await client.open_ble()
-    
+
     if saved_config:
         # Use saved configuration
         print("Using saved COHN configuration")
@@ -68,7 +68,7 @@ async def use_saved_config():
         )
         # Save for future use
         config_mgr.save_config("1234", config)
-    
+
     await client.wait_cohn_ready()
 ```
 
@@ -80,15 +80,15 @@ from gopro_sdk import CohnConfigManager
 def manage_camera_configs():
     """Manage configurations for multiple cameras."""
     config_mgr = CohnConfigManager()
-    
+
     # List all saved configurations
     configs = config_mgr.list_configs()
     print(f"Found {len(configs)} saved configurations")
-    
+
     for identifier in configs:
         config = config_mgr.load_config(identifier)
         print(f"Camera {identifier}: {config.ssid}")
-    
+
     # Delete old configuration
     config_mgr.delete_config("old_camera_id")
 ```

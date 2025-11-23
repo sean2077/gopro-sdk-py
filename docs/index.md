@@ -20,16 +20,16 @@ from gopro_sdk import GoProClient
 
 async def main():
     client = GoProClient(identifier="1234")
-    
+
     await client.open_ble()
     await client.configure_cohn(ssid="your-wifi", password="password")
     await client.wait_cohn_ready(timeout=30)
-    
+
     # Start recording
     await client.set_shutter(on=True)
     await asyncio.sleep(5)
     await client.set_shutter(on=False)
-    
+
     await client.close()
 
 asyncio.run(main())

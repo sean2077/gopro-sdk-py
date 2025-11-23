@@ -34,7 +34,7 @@ from gopro_sdk import GoProClient
 
 async def main():
     client = GoProClient(identifier="1234")
-    
+
     try:
         await client.open_ble()
         await client.configure_cohn(
@@ -42,7 +42,7 @@ async def main():
             password="password"
         )
         await client.wait_cohn_ready()
-        
+
         # Camera is ready to use
         status = await client.get_camera_state()
         print(f"Battery: {status.get('battery_percent')}%")

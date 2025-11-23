@@ -18,13 +18,9 @@ Key features:
 
 __version__ = "0.1.0"
 
-from .client import *  # noqa: F403
-from .commands import *  # noqa: F403
-from .config import *  # noqa: F403
-from .connection import *  # noqa: F403
-from .exceptions import *  # noqa: F403
-from .multi_camera import *  # noqa: F403
-from .state_parser import *  # noqa: F403
+from .client import GoProClient
+from .config import CohnConfigManager, CohnCredentials
+from .multi_camera import MultiCameraManager
 
 __all__ = [
     "GoProClient",

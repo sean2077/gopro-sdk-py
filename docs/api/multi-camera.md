@@ -15,13 +15,13 @@ from gopro_sdk import MultiCameraManager
 
 async def main():
     manager = MultiCameraManager()
-    
+
     cameras = {
         "cam1": "1234",
         "cam2": "5678",
         "cam3": "9012",
     }
-    
+
     try:
         # Connect all cameras
         await manager.connect_all(
@@ -29,16 +29,16 @@ async def main():
             ssid="your-wifi",
             password="password"
         )
-        
+
         # Start recording on all cameras
         await manager.execute_all("set_shutter", on=True)
-        
+
         # Wait for recording
         await asyncio.sleep(10)
-        
+
         # Stop recording on all cameras
         await manager.execute_all("set_shutter", on=False)
-        
+
         # Get status from all cameras
         statuses = await manager.get_all_status()
         for cam_id, status in statuses.items():
@@ -61,15 +61,15 @@ async def synchronized_recording(
 ):
     """Record on multiple cameras simultaneously."""
     manager = MultiCameraManager()
-    
+
     try:
         await manager.connect_all(camera_ids, wifi_ssid, wifi_password)
-        
+
         # All cameras start at the same time
         await manager.execute_all("set_shutter", on=True)
         await asyncio.sleep(duration)
         await manager.execute_all("set_shutter", on=False)
-        
+
         print("Recording completed on all cameras")
     finally:
         await manager.disconnect_all()
@@ -82,7 +82,7 @@ async def robust_multi_camera():
     """Handle errors in multi-camera scenarios."""
     manager = MultiCameraManager()
     cameras = {"cam1": "1234", "cam2": "5678"}
-    
+
     try:
         await manager.connect_all(cameras, "wifi", "password")
     except Exception as e:
@@ -93,7 +93,7 @@ async def robust_multi_camera():
                 print(f"{cam_id}: Connected")
             else:
                 print(f"{cam_id}: Failed")
-    
+
     # Continue with connected cameras only
     await manager.execute_all("set_shutter", on=True)
 ```
