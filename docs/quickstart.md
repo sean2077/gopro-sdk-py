@@ -29,9 +29,12 @@ uv sync
 
 ## Your First Connection
 
-### 1. Find Your Camera
+### 1. Prepare Your Camera
 
-First, make sure your camera is turned on and in pairing mode. Note the last 4 digits of your camera's name (e.g., "GoPro 1234" → use "1234").
+!!! note "First-time Pairing"
+    For first-time pairing, you need to enable pairing mode on your GoPro camera. The exact steps vary by camera model. Please refer to the [GoPro Pairing Guide](https://community.gopro.com/s/article/GoPro-Quik-How-To-Pair-Your-Camera?language=en_US).
+
+Note the last 4 digits of your camera's name (e.g., "GoPro 1234" → use "1234")
 
 ### 2. Simple Connection Test
 

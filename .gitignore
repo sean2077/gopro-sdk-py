@@ -1,6 +1,7 @@
 /.ref/
 /AGENTS.md
 /.serena/
+/cohn_credentials.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

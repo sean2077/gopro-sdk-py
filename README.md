@@ -40,11 +40,11 @@ asyncio.run(main())
 
 - [Quick Start Guide](https://sean2077.github.io/gopro-sdk-py/quickstart/) - Installation and basic usage
 - [API Reference](https://sean2077.github.io/gopro-sdk-py/api/overview/) - Complete API documentation
-- [Development Guide](https://sean2077.github.io/gopro-sdk-py/development/) - Contributing guidelines
+- [Development Guide](https://sean2077.github.io/gopro-sdk-py/development/) - Setup, testing, and contribution guidelines
 
 ## Contributing
 
-Contributions are welcome! See the [Development Guide](https://sean2077.github.io/gopro-sdk-py/development/) for detailed information on setting up your development environment, running tests, and submitting pull requests.
+Contributions are welcome! Please check out our [documentation](https://sean2077.github.io/gopro-sdk-py/development/) for development setup and guidelines.
 
 ## License
 

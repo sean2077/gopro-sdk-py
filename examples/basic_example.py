@@ -1,12 +1,19 @@
-"""Basic example: Connect to a single GoPro camera and take a photo.
+"""Basic example: Connect to a single GoPro camera via BLE and control recording.
 
 This example demonstrates:
-- Connecting to a GoPro via BLE
-- Configuring COHN (Camera on Home Network)
-- Taking a photo
-- Getting camera status
+- Connecting to a GoPro via BLE (offline mode)
+- Syncing camera date/time
+- Starting/stopping recording
+
+Prerequisites:
+    For first-time pairing, enable pairing mode on your GoPro:
+    See: https://community.gopro.com/s/article/GoPro-Quik-How-To-Pair-Your-Camera?language=en_US
+
+Usage:
+    python basic_example.py 1234
 """
 
+import argparse
 import asyncio
 import logging
 
@@ -18,50 +25,42 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 
-async def main():
-    """Main example function."""
-    # Replace with your camera's identifier (last 4 digits of the name)
-    # e.g., if your camera is named "GoPro 1234", use "1234"
-    camera_identifier = "1234"
+async def async_main(camera_identifier: str):
+    """Connect to camera and control recording via BLE."""
+    async with GoProClient(target=camera_identifier, offline_mode=True) as client:
+        logger.info("Connected to camera via BLE (offline mode)!")
 
-    # Your WiFi credentials
-    wifi_ssid = "your-wifi-ssid"
-    wifi_password = "your-wifi-password"
+        # Sync camera date/time
+        logger.info("Syncing camera date/time...")
+        await client.set_date_time()
+        logger.info("Date/time synced!")
 
-    # Create client
-    client = GoProClient(identifier=camera_identifier)
+        # Start recording
+        logger.info("Starting recording...")
+        await client.start_recording()
+        logger.info("Recording started!")
 
-    try:
-        logger.info("Connecting to camera via BLE...")
-        await client.open_ble()
-        logger.info("Connected!")
+        # Record for a few seconds
+        logger.info("Recording for 5 seconds...")
+        await asyncio.sleep(5)
 
-        logger.info("Configuring COHN...")
-        await client.configure_cohn(ssid=wifi_ssid, password=wifi_password)
+        # Stop recording
+        logger.info("Stopping recording...")
+        await client.stop_recording()
+        logger.info("Recording stopped!")
 
-        logger.info("Waiting for COHN to be ready...")
-        await client.wait_cohn_ready(timeout=30)
-        logger.info("COHN is ready!")
 
-        # Get camera status
-        logger.info("Getting camera status...")
-        status = await client.get_camera_state()
-        logger.info(f"Battery: {status.get('battery_percent')}%")
-        logger.info(f"SD card space: {status.get('space_remaining')} MB")
+def main():
+    """Connect to a GoPro camera via BLE and control recording."""
+    parser = argparse.ArgumentParser(description="Connect to a GoPro camera via BLE and control recording")
+    parser.add_argument(
+        "identifier",
+        help="Camera identifier (last 4 digits of camera name, e.g., '1234' for 'GoPro 1234')",
+    )
+    args = parser.parse_args()
 
-        # Take a photo
-        logger.info("Taking a photo...")
-        await client.set_shutter(on=True)
-        await asyncio.sleep(2)  # Wait for photo to be captured
-        logger.info("Photo taken!")
-
-    except Exception as e:
-        logger.error(f"Error: {e}", exc_info=True)
-    finally:
-        logger.info("Closing connection...")
-        await client.close()
-        logger.info("Done!")
+    asyncio.run(async_main(args.identifier))
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
