@@ -130,6 +130,30 @@ pytest -v --pdb
 pytest --lf -v
 ```
 
+## Troubleshooting
+
+### COHN Timeout Issues
+
+If hardware tests fail with `COHN configuration timeout` errors:
+
+**Symptom**: Camera connects to WiFi but gets stuck at `COHN_STATE_Idle`, never receives IP address.
+
+**Common Cause**: Camera has cached network connections from previous WiFi networks.
+
+**Solution**:
+1. Reset camera network settings:
+   - Open camera menu
+   - Navigate to: Preferences → Connections → Reset Connections
+   - Confirm reset
+2. Re-run hardware tests
+
+**Prevention**: Always reset camera network settings when:
+- Switching between different WiFi networks
+- Moving camera between test environments
+- COHN provisioning fails repeatedly
+
+> **Note**: GoPro API does not provide programmatic network reset functionality. Manual camera menu operation is required.
+
 ## Coverage
 
 ```bash

@@ -436,6 +436,26 @@ Type checking is handled by Pyright (via VS Code Python extension) or ruff's typ
 ruff check src/gopro_sdk
 ```
 
+### COHN Configuration Timeout
+
+**Symptom**: Camera connects to WiFi but COHN configuration times out, stuck at `COHN_STATE_Idle`.
+
+**Root Cause**: Camera has cached network connections from previous WiFi networks. When switching between networks, the camera may fail to obtain a new IP address due to stale network cache.
+
+**Solution - Manual Camera Reset** (only method):
+
+1. Open camera menu
+2. Navigate to: Preferences → Connections → Reset Connections
+3. Confirm reset
+4. Retry connection
+
+**Prevention**: Always reset camera network settings when:
+- Switching between different WiFi networks
+- Moving camera between test environments
+- COHN provisioning fails repeatedly
+
+> **Note**: GoPro API does not provide programmatic network reset functionality. Manual camera menu operation is required.
+
 ## Getting Help
 
 - Open an issue on GitHub

@@ -38,6 +38,13 @@ This guide will help you get started with the GoPro SDK for Python in just a few
 
 ### 1. Prepare Your Camera
 
+!!! warning "Install GoPro Labs Firmware"
+    Open GoPro API requires **GoPro Labs firmware** to be installed on your camera. This is a special developer-focused firmware that enables API access.
+
+    **Installation Guide**: [GoPro Labs](https://community.gopro.com/s/article/GoPro-Labs)
+
+    Supported cameras: HERO9 Black, HERO10 Black, HERO11 Black, HERO11 Black Mini, HERO12 Black, HERO13 Black, MAX 2
+
 !!! note "First-time Pairing"
     For first-time pairing, you need to enable pairing mode on your GoPro camera. The exact steps vary by camera model. Please refer to the [GoPro Pairing Guide](https://community.gopro.com/s/article/GoPro-Quik-How-To-Pair-Your-Camera?language=en_US).
 
@@ -257,6 +264,7 @@ asyncio.run(main())
 ## Troubleshooting
 
 !!! warning "Camera Not Found"
+    - **Check firmware**: Ensure [GoPro Labs firmware](https://community.gopro.com/s/article/GoPro-Labs) is installed
     - Make sure Bluetooth is enabled on your computer
     - Ensure the camera is in pairing mode
     - Try moving closer to the camera

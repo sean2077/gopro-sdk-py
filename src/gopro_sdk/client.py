@@ -1248,6 +1248,12 @@ class GoProClient(HealthCheckMixin):
         - Router reset → certificate still valid, IP change handled automatically
         - Camera reboot → certificate still valid, COHN configuration applied automatically
 
+        Important:
+            This method only resets the COHN certificate. It does NOT clear the camera's
+            network cache. If experiencing COHN timeout due to cached network connections,
+            you must manually reset via camera menu:
+            Preferences → Connections → Reset Connections
+
         Note: This operation clears existing certificate, camera must be connected to WiFi to complete configuration.
 
         Returns:

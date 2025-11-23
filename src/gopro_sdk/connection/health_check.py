@@ -1,4 +1,15 @@
-"""Health check and auto-reconnect functionality."""
+"""Health check and auto-reconnect functionality.
+
+Known Limitation:
+    GoPro API does not provide network cache reset functionality. When COHN times out
+    due to cached network connections from previous WiFi networks, manual camera menu
+    operation is required: Preferences → Connections → Reset Connections
+
+    Future enhancement: Detect COHN_STATE_Idle timeout and provide clear user guidance
+    to manually reset camera network settings.
+
+    Reference: docs/development.md#cohn-configuration-timeout for troubleshooting guide
+"""
 
 from __future__ import annotations
 

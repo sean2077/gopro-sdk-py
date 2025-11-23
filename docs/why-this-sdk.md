@@ -116,16 +116,14 @@ Modular, layered architecture
 
 ## Feature Comparison
 
-| Feature                   | OpenGoPro SDK | gopro-sdk-py            |
-| ------------------------- | ------------- | ----------------------- |
-| Persistent COHN Config    | :x:           | :white_check_mark:      |
-| Single-step Connection    | :x:           | :white_check_mark:      |
-| Accurate State Tracking   | :x:           | :white_check_mark:      |
-| Multi-Camera Manager      | :x:           | :white_check_mark:      |
-| Type Hints                | Partial       | :white_check_mark: Full |
-| Async Context Manager     | :x:           | :white_check_mark:      |
-| Production-Ready          | Research      | :white_check_mark:      |
-| Startup Time (10 cameras) | ~40s          | ~10s                    |
+| Feature                   | OpenGoPro SDK | gopro-sdk-py       |
+| ------------------------- | ------------- | ------------------ |
+| Persistent COHN Config    | :x:           | :white_check_mark: |
+| Single-step Connection    | :x:           | :white_check_mark: |
+| Accurate State Tracking   | :x:           | :white_check_mark: |
+| Multi-Camera Manager      | :x:           | :white_check_mark: |
+| Production-Ready          | Research      | :white_check_mark: |
+| Startup Time (10 cameras) | ~40s          | ~10s               |
 
 !!! success "Key Improvements"
     - [x] **Persistent COHN** - Save and restore COHN configuration without reconfiguration
