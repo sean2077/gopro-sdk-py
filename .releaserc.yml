@@ -21,11 +21,14 @@ plugins:
   - - "@semantic-release/exec"
     - prepareCmd: |
         sed -i 's/__version__ = ".*"/__version__ = "${nextRelease.version}"/' src/gopro_sdk/__init__.py
+        uv version "${nextRelease.version}"
+      publishCmd: uv build
   - - "@semantic-release/git"
     - assets:
         - CHANGELOG.md
         - src/gopro_sdk/__init__.py
         - pyproject.toml
+        - uv.lock
       message: |-
         chore(release): ${nextRelease.version} [skip ci]
 

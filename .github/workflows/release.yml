@@ -60,10 +60,6 @@ jobs:
           GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
         run: npx semantic-release
 
-      - name: Build package
-        if: success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
-        run: uv build
-
       - name: Publish to PyPI
-        if: success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
+        if: success() && hashFiles('dist/*') != ''
         uses: pypa/gh-action-pypi-publish@release/v1
