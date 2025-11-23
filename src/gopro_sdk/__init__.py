@@ -16,7 +16,7 @@ Key features:
 - Comprehensive state parsing
 """
 
-__version__ = "0.1.0"
+__version__ = "1.0.0-dev.1"
 
 from .client import GoProClient
 from .config import CohnConfigManager, CohnCredentials
