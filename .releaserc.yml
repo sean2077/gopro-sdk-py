@@ -1,0 +1,35 @@
+branches:
+  - main
+  # - name: dev
+  #   channel: dev
+  #   prerelease: dev
+tagFormat: ${version}
+preset: conventionalcommits
+plugins:
+  - "@semantic-release/commit-analyzer"
+  - - "@semantic-release/release-notes-generator"
+    - presetConfig:
+        types:
+          - type: "fix"
+            section: "Bug Fixes"
+          - type: "feat"
+            section: "Features"
+          - type: "perf"
+            section: "Performance Improvements"
+          - type: "docs"
+            section: "Documentation"
+  - - "@semantic-release/changelog"
+    - changelogFile: CHANGELOG.md
+  - - "@semantic-release/exec"
+    - prepareCmd: |
+        sed -i 's/__version__ = ".*"/__version__ = "${nextRelease.version}"/' src/gopro_sdk/__init__.py
+  - - "@semantic-release/git"
+    - assets:
+        - CHANGELOG.md
+        - src/gopro_sdk/__init__.py
+        - pyproject.toml
+      message: |-
+        chore(release): ${nextRelease.version} [skip ci]
+
+        ${nextRelease.notes}
+  - "@semantic-release/github"

@@ -1,0 +1,127 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "gopro-sdk-py"
+version = "0.1.0"
+description = "A Python SDK for controlling GoPro cameras, optimized for multi-camera COHN scenarios"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "sean2077", email = "sean2077@users.noreply.github.com" }]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Multimedia :: Video",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+keywords = [
+  "gopro",
+  "camera",
+  "sdk",
+  "bluetooth",
+  "ble",
+  "cohn",
+  "multi-camera",
+]
+requires-python = ">=3.10"
+dependencies = [
+  "open-gopro>=0.17.0",
+  "bleak>=0.22.3",
+  "requests>=2.32.3",
+  "protobuf>=5.29.0",
+  "aiohttp>=3.13.2",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=9.0.0",
+  "pytest-asyncio>=0.25.0",
+  "pytest-cov>=6.0.0",
+  "ruff>=0.14.0",
+  "pre-commit>=4.0.0",
+  "poethepoet>=0.37.0",
+]
+docs = [
+  "mkdocs>=1.6.0",
+  "mkdocs-material>=9.7.0",
+  "mkdocstrings[python]>=0.30.0",
+  "mkdocs-git-revision-date-localized-plugin>=1.5.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/sean2077/gopro-sdk-py"
+Repository = "https://github.com/sean2077/gopro-sdk-py"
+Issues = "https://github.com/sean2077/gopro-sdk-py/issues"
+Documentation = "https://sean2077.github.io/gopro-sdk-py/"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gopro_sdk"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+fix = true
+
+[tool.ruff.lint]
+select = [
+  "E",   # pycodestyle errors
+  "F",   # pyflakes
+  "W",   # pycodestyle warnings
+  "B",   # flake8-bugbear
+  "I",   # isort
+  "N",   # pep8-naming
+  "UP",  # pyupgrade
+  "C4",  # flake8-comprehensions
+  "PLC", # pylint conventions
+]
+ignore = [
+  "E501", # line length handled by ruff format
+  "B008", # function calls in argument defaults
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+  "PLC0415", # allow imports inside functions in tests
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = ["-v", "-s", "--strict-markers", "--asyncio-mode=auto"]
+markers = [
+  "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+  "hardware: marks tests requiring actual hardware (cameras)",
+]
+asyncio_mode = "auto"
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s [%(levelname)4s] %(message)s"
+log_cli_date_format = "%H:%M:%S"
+console_output_style = "progress"
+filterwarnings = ["ignore::DeprecationWarning"]
+
+# Development Tasks (using poethepoet)
+[tool.poe.tasks.format]
+cmd = "ruff format . && ruff check . --fix --select I"
+help = "Format code and organize imports"
+
+[tool.poe.tasks.lint]
+cmd = "ruff check ."
+help = "Run linter"
+
+[tool.poe.tasks.test]
+cmd = "pytest"
+help = "Run tests"
+
+[tool.poe.tasks.docs]
+cmd = "uv run mkdocs serve"
+help = "Start documentation server"

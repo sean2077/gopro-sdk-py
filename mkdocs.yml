@@ -1,0 +1,115 @@
+site_name: GoPro SDK for Python
+site_description: Production-ready Python SDK for controlling GoPro cameras
+site_author: sean2077
+site_url: https://sean2077.github.io/gopro-sdk-py
+
+repo_name: sean2077/gopro-sdk-py
+repo_url: https://github.com/sean2077/gopro-sdk-py
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue
+      accent: light blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue
+      accent: light blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Roboto
+    code: Roboto Mono
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - toc.follow
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            docstring_section_style: table
+            show_root_heading: true
+            show_source: true
+            show_signature_annotations: true
+            separate_signature: true
+            merge_init_into_class: true
+            show_if_no_docstring: false
+            members_order: source
+            group_by_category: true
+            show_category_heading: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - tables
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+nav:
+  - Home:
+      - Overview: index.md
+      - Why This SDK: why-this-sdk.md
+  - User Guide:
+      - Quick Start: quickstart.md
+      - Basic Usage: examples/basic.md
+      - Multi-Camera: examples/multi-camera.md
+      - COHN Configuration: examples/cohn.md
+  - API Reference:
+      - Overview: api/overview.md
+      - Client: api/client.md
+      - Multi-Camera: api/multi-camera.md
+      - Commands: api/commands.md
+      - Connection: api/connection.md
+      - Configuration: api/config.md
+      - Exceptions: api/exceptions.md
+  - Development:
+      - Architecture: architecture.md
+      - Development Guide: development.md
+      - Contributing: contributing.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/sean2077/gopro-sdk-py
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/gopro-sdk-py/
+
+copyright: Copyright &copy; 2025 sean2077
