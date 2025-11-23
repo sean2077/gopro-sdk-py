@@ -17,13 +17,13 @@ repos:
 
   # Ruff - Python linting and formatting
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.0
+    rev: v0.14.6
     hooks:
       # Run ruff linter
       - id: ruff-check
         args: ["--fix"]
         types_or: [python, pyi]
-        exclude: ^(vendor/|scripts/|tests/)
+        exclude: ^(vendor/|scripts/)
       # Run ruff formatter
       - id: ruff-format
         types_or: [python, pyi]
