@@ -21,7 +21,7 @@ Thank you for your interest in contributing! For detailed technical information,
 
 ## Commit Message Convention
 
-This project follows the [Conventional Commits](https://www.conventionalcommits.org/) specification for automatic versioning and changelog generation.
+This project follows an improved [Conventional Commits](https://www.conventionalcommits.org/) specification for automatic versioning and changelog generation.
 
 ### Format
 
@@ -33,16 +33,51 @@ This project follows the [Conventional Commits](https://www.conventionalcommits.
 [optional footer]
 ```
 
-### Types
+### Core Types
 
-- **feat**: New feature (triggers MINOR version bump)
-- **fix**: Bug fix (triggers PATCH version bump)
-- **docs**: Documentation changes only
-- **style**: Code style changes (formatting, whitespace)
-- **refactor**: Code restructuring without feature changes
+#### `feat` - New Feature
+
+A commit that introduces new feature with strong independence, providing significant new capabilities or behaviors. Usually represents relatively complete and independent functional modules.
+
+**Examples:**
+```bash
+feat: add persistent COHN configuration
+feat(client): support lazy HTTP connection
+feat: implement multi-camera synchronization
+```
+
+#### `fix` - Improvements and Fixes
+
+A commit that fixes, improves, or supplements existing code, including:
+- Traditional error corrections
+- Improvements and refinements to released features
+- Adding minor but beneficial features or adjustments
+- Supplementary fixes and optimizations for released versions
+- Detail improvements that don't affect core functionality usage
+
+**Examples:**
+```bash
+fix: correct BLE connection timeout handling
+fix(http): handle SSL certificate errors
+fix: improve state tracking accuracy
+fix: optimize button display in dark mode
+fix: adjust mobile menu interaction experience
+```
+
+### Supporting Types
+
+- **docs**: Documentation-only changes that do not affect code functionality
+- **style**: Code formatting changes (white-space, formatting, missing semi-colons, etc.)
+- **refactor**: Code adjustments and modifications that neither add major features nor fix issues, including:
+  - Code structure refactoring and optimization
+  - Improving code readability and maintainability
+  - Adding logs, comments, and other auxiliary code
+  - Code standard compliance adjustments
 - **perf**: Performance improvements
 - **test**: Adding or updating tests
-- **chore**: Maintenance tasks (dependencies, config)
+- **build**: Changes to build system or external dependencies
+- **ci**: Changes to CI configuration files and scripts
+- **chore**: Maintenance tasks (dependencies updates, config cleanup, etc.)
 
 ### Breaking Changes
 
@@ -57,23 +92,24 @@ BREAKING CHANGE: Client initialization parameters have changed
 ### Examples
 
 ```bash
-# Features
+# Features (complete, independent capabilities)
 feat: add persistent COHN configuration
 feat(client): support lazy HTTP connection
 feat!: redesign multi-camera API
 
-# Fixes
+# Fixes and improvements
 fix: correct BLE connection timeout handling
-fix(http): handle SSL certificate errors
-fix: improve state tracking accuracy
+fix(http): improve SSL error handling
+fix: enhance state tracking accuracy
 
-# Documentation
-docs: update quick start guide
-docs(api): add client usage examples
+# Code adjustments
+refactor: simplify connection manager logic
+refactor: add detailed logging for debugging
+refactor: improve code readability
 
 # Other types
-refactor: simplify connection manager
-perf: optimize state parsing
+docs: update quick start guide
+perf: optimize state parsing performance
 test: add multi-camera integration tests
 chore: update dependencies
 ```
@@ -88,6 +124,13 @@ Common scopes in this project:
 - `config`: Configuration management
 - `docs`: Documentation
 - `tests`: Test suite
+
+### Version Mapping
+
+- `feat` → MINOR version bump
+- `fix` → PATCH version bump
+- `!` or `BREAKING CHANGE` → MAJOR version bump
+- Other types → PATCH version bump (based on project policy)
 
 ## Code Style
 
