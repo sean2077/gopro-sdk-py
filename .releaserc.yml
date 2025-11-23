@@ -1,8 +1,8 @@
 branches:
   - main
-  # - name: dev
-  #   channel: dev
-  #   prerelease: dev
+  - name: dev
+    channel: dev
+    prerelease: dev
 tagFormat: ${version}
 preset: conventionalcommits
 plugins:
