@@ -20,11 +20,17 @@ __version__ = "0.1.0"
 
 from .client import GoProClient
 from .config import CohnConfigManager, CohnCredentials
+from .connection.ble_scanner import BleScanner
 from .multi_camera import MultiCameraManager
+from .state_parser import format_camera_state, get_status_value, is_camera_encoding
 
 __all__ = [
     "GoProClient",
     "MultiCameraManager",
     "CohnConfigManager",
     "CohnCredentials",
+    "BleScanner",
+    "format_camera_state",
+    "get_status_value",
+    "is_camera_encoding",
 ]
