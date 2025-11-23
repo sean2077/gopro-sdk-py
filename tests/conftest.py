@@ -1,17 +1,26 @@
 """Pytest configuration and common fixtures."""
 
 import asyncio
+import os
 from collections.abc import AsyncGenerator
 
 import pytest
+from dotenv import load_dotenv
 
 from gopro_sdk import GoProClient
 
-# Test camera list (modify according to actual situation)
-TEST_CAMERAS = ["1332"]  # Add your camera serial numbers here
-# Note: Computer and camera must be on the same WiFi network for HTTP communication
-TEST_WIFI_SSID = "your-wifi-ssid"  # Use the same network as your computer
-TEST_WIFI_PASSWORD = "your-wifi-password"  # Modify according to actual situation
+# Load environment variables from .env file
+load_dotenv()
+
+# Test camera configuration - use environment variables or fallback to defaults
+# Set via: export GOPRO_TEST_CAMERAS="1234,5678" (comma-separated)
+# Or create a .env file with: GOPRO_TEST_CAMERAS=1234,5678
+TEST_CAMERAS = os.getenv("GOPRO_TEST_CAMERAS", "").split(",")
+
+# WiFi configuration - use environment variables
+# Set via: export GOPRO_TEST_WIFI_SSID="your-wifi" GOPRO_TEST_WIFI_PASSWORD="your-password"
+TEST_WIFI_SSID = os.getenv("GOPRO_TEST_WIFI_SSID", "")
+TEST_WIFI_PASSWORD = os.getenv("GOPRO_TEST_WIFI_PASSWORD", "")
 
 
 @pytest.fixture(scope="session")

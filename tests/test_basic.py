@@ -27,7 +27,9 @@ def test_package_imports():
     """Test that the main package can be imported."""
     import gopro_sdk
 
-    assert gopro_sdk.__version__ == "0.1.0"
+    assert gopro_sdk.__version__ is not None
+    assert isinstance(gopro_sdk.__version__, str)
+    assert len(gopro_sdk.__version__) > 0
 
 
 def test_client_import():

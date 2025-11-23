@@ -118,6 +118,39 @@ gopro-sdk-py/
 
 ## Testing
 
+### Test Configuration
+
+Hardware tests require GoPro cameras. Configure using environment variables:
+
+=== "Using .env file (Recommended)"
+
+    ```bash
+    # Copy example configuration
+    cp .env.example .env
+
+    # Edit .env with your camera settings
+    # GOPRO_TEST_CAMERAS=1332,5678
+    # GOPRO_TEST_WIFI_SSID=your-wifi-ssid
+    # GOPRO_TEST_WIFI_PASSWORD=your-password
+    ```
+
+    !!! tip
+        The `.env` file is gitignored and won't be committed to the repository.
+
+=== "Using environment variables"
+
+    ```bash
+    # Linux/macOS
+    export GOPRO_TEST_CAMERAS="1332,5678"
+    export GOPRO_TEST_WIFI_SSID="your-wifi"
+    export GOPRO_TEST_WIFI_PASSWORD="your-password"
+
+    # Windows PowerShell
+    $env:GOPRO_TEST_CAMERAS="1332,5678"
+    $env:GOPRO_TEST_WIFI_SSID="your-wifi"
+    $env:GOPRO_TEST_WIFI_PASSWORD="your-password"
+    ```
+
 ### Running Tests
 
 ```bash
@@ -136,7 +169,7 @@ pytest tests/test_basic.py::test_client_creation
 
 # Run with markers
 pytest -m "not slow"      # Skip slow tests
-pytest -m "not hardware"  # Skip hardware tests
+pytest -m "not hardware"  # Skip hardware tests (no camera needed)
 ```
 
 ### Writing Tests
