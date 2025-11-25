@@ -16,12 +16,16 @@ Key features:
 - Comprehensive state parsing
 """
 
-__version__ = "1.0.0-dev.1"
+from importlib.metadata import version
+
+__version__ = version("gopro-sdk-py")
 
 from .client import GoProClient
 from .config import CohnConfigManager, CohnCredentials
 from .connection.ble_scanner import BleScanner
+from .logging_config import get_logger, setup_logging
 from .multi_camera import MultiCameraManager
+from .rich_utils import Console, Progress, Table, console, create_progress, create_table
 from .state_parser import format_camera_state, get_status_value, is_camera_encoding
 
 __all__ = [
@@ -33,4 +37,12 @@ __all__ = [
     "format_camera_state",
     "get_status_value",
     "is_camera_encoding",
+    "setup_logging",
+    "get_logger",
+    "console",
+    "Console",
+    "Progress",
+    "Table",
+    "create_progress",
+    "create_table",
 ]

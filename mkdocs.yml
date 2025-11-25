@@ -114,8 +114,6 @@ nav:
   - User Guide:
       - Quick Start: quickstart.md
       - Basic Usage: examples/basic.md
-      - Multi-Camera: examples/multi-camera.md
-      - COHN Configuration: examples/cohn.md
   - API Reference:
       - Overview: api/overview.md
       - Client: api/client.md

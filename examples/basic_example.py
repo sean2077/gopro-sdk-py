@@ -17,10 +17,10 @@ import argparse
 import asyncio
 import logging
 
-from gopro_sdk import GoProClient
+from gopro_sdk import GoProClient, setup_logging
 
-# Enable logging to see what's happening
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+# Enable logging with rich formatting
+setup_logging(level=logging.INFO)
 
 logger = logging.getLogger(__name__)
 

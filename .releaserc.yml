@@ -10,23 +10,20 @@ plugins:
   - - "@semantic-release/release-notes-generator"
     - presetConfig:
         types:
-          - type: "fix"
-            section: "Fixes"
-          - type: "feat"
-            section: "Features"
-          - type: "perf"
-            section: "Performance Improvements"
+          - type: feat
+            section: Features
+          - type: fix
+            section: Fixes
+          - type: perf
+            section: Performance Improvements
   - - "@semantic-release/changelog"
     - changelogFile: CHANGELOG.md
   - - "@semantic-release/exec"
-    - prepareCmd: |
-        sed -i 's/__version__ = ".*"/__version__ = "${nextRelease.version}"/' src/gopro_sdk/__init__.py
-        uv version "${nextRelease.version}"
+    - prepareCmd: uv version "${nextRelease.version}"
       publishCmd: uv build
   - - "@semantic-release/git"
     - assets:
         - CHANGELOG.md
-        - src/gopro_sdk/__init__.py
         - pyproject.toml
         - uv.lock
       message: |-

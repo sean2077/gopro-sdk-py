@@ -33,11 +33,17 @@ This project follows an improved [Conventional Commits](https://www.conventional
 [optional footer]
 ```
 
+**Description rules:**
+- Use imperative mood: "add feature" not "added feature"
+- Start with lowercase letter
+- No period at the end
+- Keep it under 72 characters
+
 ### Core Types
 
 #### `feat` - New Feature
 
-A commit that introduces new feature with strong independence, providing significant new capabilities or behaviors. Usually represents relatively complete and independent functional modules.
+A commit that introduces a new capability or behavior. Use `feat` when adding something that users can do that they couldn't do before.
 
 **Examples:**
 ```bash
@@ -46,48 +52,77 @@ feat(client): support lazy HTTP connection
 feat: implement multi-camera synchronization
 ```
 
-#### `fix` - Improvements and Fixes
+#### `fix` - Fixes and Improvements
 
-A commit that fixes, improves, or supplements existing code, including:
-- Traditional error corrections
-- Improvements and refinements to released features
-- Adding minor but beneficial features or adjustments
-- Supplementary fixes and optimizations for released versions
-- Detail improvements that don't affect core functionality usage
+A commit that fixes, improves, or supplements existing code. This is broader than traditional "bug fix" - it covers any incremental improvement, including:
+- Bug fixes and error corrections
+- Improvements and refinements to existing features
+- Minor enhancements that don't warrant a new feature
+- Adjustments to default values, configurations, or behaviors
+
+Use `fix` when the change is **user-facing** or affects runtime behavior. Use `refactor` for internal code restructuring that doesn't change observable behavior.
 
 **Examples:**
 ```bash
 fix: correct BLE connection timeout handling
 fix(http): handle SSL certificate errors
 fix: improve state tracking accuracy
-fix: optimize button display in dark mode
-fix: adjust mobile menu interaction experience
+fix: add missing error message for invalid input
+fix: update default timeout value
+```
+
+#### `perf` - Performance Improvements
+
+A commit that improves performance metrics (speed, memory, battery, etc.) without changing the external API or expected behavior.
+
+**When to use `perf` vs `fix`:**
+- `perf`: The primary goal is performance optimization (e.g., caching, algorithm improvement)
+- `fix`: Performance issue was a bug causing unacceptable behavior (e.g., memory leak, timeout)
+
+**Examples:**
+```bash
+perf: cache parsed state to reduce CPU usage
+perf(ble): reduce connection handshake time
+perf: lazy load modules to improve startup time
 ```
 
 ### Supporting Types
 
-- **docs**: Documentation-only changes that do not affect code functionality
-- **style**: Code formatting changes (white-space, formatting, missing semi-colons, etc.)
-- **refactor**: Code adjustments and modifications that neither add major features nor fix issues, including:
-  - Code structure refactoring and optimization
-  - Improving code readability and maintainability
-  - Adding logs, comments, and other auxiliary code
-  - Code standard compliance adjustments
-- **perf**: Performance improvements
-- **test**: Adding or updating tests
-- **build**: Changes to build system or external dependencies
-- **ci**: Changes to CI configuration files and scripts
-- **chore**: Maintenance tasks (dependencies updates, config cleanup, etc.)
+These types do not trigger a release or appear in the changelog:
+
+- **docs**: Documentation-only changes (README, docstrings, inline comments explaining "why")
+- **style**: Code formatting only (whitespace, semicolons, quotes, line breaks)
+- **refactor**: Internal code restructuring with no external behavior change (rename variables, extract functions, simplify logic)
+- **test**: Adding or updating tests (no production code changes)
+- **build**: Changes to build system or tooling (hatch, setuptools, webpack)
+- **ci**: Changes to CI configuration (GitHub Actions, Jenkins)
+- **chore**: Maintenance tasks (dependency updates, config cleanup, gitignore)
+
+> **`fix` vs `refactor`**: If the change affects user-facing behavior or fixes an issue, use `fix`. If it's purely internal restructuring with identical external behavior, use `refactor`.
 
 ### Breaking Changes
 
-Add `!` after type or include `BREAKING CHANGE:` in footer to trigger MAJOR version bump:
+Add `!` after type or include `BREAKING CHANGE:` in footer to trigger MAJOR version bump. This can be used with any type:
 
-```
+```bash
 feat!: redesign client API
-
-BREAKING CHANGE: Client initialization parameters have changed
+fix!: rename `connect()` parameter from `timeout` to `timeout_seconds`
+perf!: require Python 3.12+ for performance features
 ```
+
+Example with footer:
+```
+feat: redesign client API
+
+BREAKING CHANGE: Client initialization parameters have changed.
+The `timeout` parameter is now required.
+```
+
+### Best Practices
+
+- **One logical change per commit**: Don't mix unrelated changes
+- **Atomic commits**: Each commit should build and pass tests independently
+- **Prefer specificity**: Choose the most specific type that applies (`perf` over `fix` for optimizations)
 
 ### Examples
 
@@ -97,40 +132,38 @@ feat: add persistent COHN configuration
 feat(client): support lazy HTTP connection
 feat!: redesign multi-camera API
 
-# Fixes and improvements
+# Fixes and improvements (user-facing changes)
 fix: correct BLE connection timeout handling
-fix(http): improve SSL error handling
-fix: enhance state tracking accuracy
+fix(http): handle SSL certificate errors
+fix: add validation for camera serial format
 
-# Code adjustments
-refactor: simplify connection manager logic
-refactor: add detailed logging for debugging
-refactor: improve code readability
+# Performance (measurable improvements)
+perf: cache state parsing results
+perf(ble): batch BLE write operations
 
-# Other types
+# Internal changes (no release)
+refactor: extract connection logic to separate module
 docs: update quick start guide
-perf: optimize state parsing performance
 test: add multi-camera integration tests
-chore: update dependencies
+chore(deps): update aiohttp to 3.9.0
 ```
 
 ### Scope (Optional)
 
-Common scopes in this project:
-- `client`: GoProClient related
-- `ble`: BLE connection
-- `http`: HTTP/COHN connection
-- `commands`: Command implementations
-- `config`: Configuration management
-- `docs`: Documentation
-- `tests`: Test suite
+Scope provides additional context. Common patterns:
+- Module/component name: `client`, `ble`, `http`, `api`
+- Feature area: `auth`, `config`, `logging`
+- Special scopes: `deps` (dependencies), `release`
 
 ### Version Mapping
 
-- `feat` → MINOR version bump
-- `fix` → PATCH version bump
-- `!` or `BREAKING CHANGE` → MAJOR version bump
-- Other types → PATCH version bump (based on project policy)
+| Type                              | Version Bump      | Changelog |
+| --------------------------------- | ----------------- | --------- |
+| `feat`                            | MINOR (x.**Y**.0) | Yes       |
+| `fix`                             | PATCH (x.y.**Z**) | Yes       |
+| `perf`                            | PATCH (x.y.**Z**) | Yes       |
+| `!` or `BREAKING CHANGE`          | MAJOR (**X**.0.0) | Yes       |
+| Others (`docs`, `refactor`, etc.) | No release        | No        |
 
 ## Code Style
 

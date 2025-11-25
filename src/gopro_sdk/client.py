@@ -20,7 +20,7 @@ from typing import Any
 
 import open_gopro.models.proto.cohn_pb2 as cohn_proto
 import open_gopro.models.proto.response_generic_pb2 as response_proto
-from open_gopro.models.constants import ActionId, FeatureId, StatusId
+from open_gopro.models.constants import ActionId, FeatureId
 from open_gopro.models.constants.settings import VideoResolution
 
 from .ble_uuid import GoProBleUUID
@@ -37,8 +37,8 @@ from .connection import (
     HealthCheckMixin,
     HttpConnectionManager,
 )
-from .exceptions import BleConnectionError, HttpConnectionError
-from .state_parser import get_status_value, parse_camera_state
+from .exceptions import BleConnectionError
+from .state_parser import parse_camera_state
 
 logger = logging.getLogger(__name__)
 
@@ -566,130 +566,36 @@ class GoProClient(HealthCheckMixin):
             Preview stream URL (udp://ip:port)
 
         Raises:
-            GoproError: Preview stream unavailable or failed to start
+            HttpConnectionError: HTTP connection failed or unavailable
+            GoproError: Camera rejected preview request
 
-        Note:
-            Optimization logic:
-            1. Check preview stream status first, return directly if already running (avoid unnecessary restart)
-            2. If not running or camera busy, execute full start procedure
-
-            Causes of HTTP 409 error:
-            - Camera will reject starting preview stream when in BUSY (Status ID 8) state
-            - Camera will reject starting preview stream when in ENCODING (Status ID 10) state
-            - Camera will reject restarting preview stream when PREVIEW_STREAM (Status ID 32) = True
+        Design philosophy:
+            Direct attempt without polling - let operations fail fast with clear errors.
+            Camera will return appropriate HTTP status codes if not ready (e.g., 409 if busy).
         """
-        # Step 1: Check current preview stream status
-        try:
-            raw_state = await self.get_camera_state()
-            parsed_state = parse_camera_state(raw_state)
-
-            is_busy = get_status_value(parsed_state, StatusId.BUSY)
-            is_encoding = get_status_value(parsed_state, StatusId.ENCODING)
-            is_preview_active = get_status_value(parsed_state, StatusId.PREVIEW_STREAM)
-
-            # If preview stream is already running and camera state is normal, return URL directly
-            if is_preview_active and not is_busy and not is_encoding:
-                logger.info(f"📹 [{self.target}] Preview stream already running, no need to restart")
-                return f"udp://127.0.0.1:{port}"
-
-            # If preview stream started but camera busy, need to restart
-            if is_preview_active and (is_busy or is_encoding):
-                logger.debug(
-                    f"[{self.target}] Preview stream started but camera busy (BUSY={is_busy}, ENCODING={is_encoding}), need to restart"
-                )
-        except Exception as e:
-            logger.debug(
-                f"[{self.target}] Failed to query preview stream status: {e}, will execute full start procedure"
-            )
-
-        # Step 2: Stop preview stream (if needed)
-        # Only need to stop when preview stream is running
+        # Attempt to stop any existing preview/recording directly
+        # Failures are expected and ignored - camera handles state internally
         try:
             await self.set_preview_stream(False)
-            # Give camera some time to update PREVIEW_STREAM status
-            await asyncio.sleep(0.3)
         except Exception:
-            pass  # Ignore stop failure errors (possibly already stopped)
+            pass  # Already stopped or not applicable
 
-        # Step 3: Stop recording (if recording)
-        # This step is critical! GoPro camera cannot start preview stream while recording
         try:
             await self.set_shutter(False)
-            logger.debug(f"[{self.target}] Ensured camera stopped recording")
-        except Exception as e:
-            logger.debug(f"[{self.target}] Failed to stop recording (possibly not recording): {e}")
+        except Exception:
+            pass  # Not recording or already stopped
 
-        # Step 4: Wait for camera ready (not in BUSY, ENCODING state, and preview stream stopped)
-        # This is the key to fixing HTTP 409 error!
-        # GoPro camera will reject starting preview stream in following states (returns 409):
-        #   - BUSY = True (Status ID 8)
-        #   - ENCODING = True (Status ID 10)
-        #   - PREVIEW_STREAM = True (Status ID 32) <-- Previously missed this check!
-        await self._wait_for_camera_ready(timeout=self._timeout.camera_ready_timeout)
+        # Brief pause to let camera update state
+        await asyncio.sleep(0.2)
 
-        # Step 5: Now start preview stream
+        # Direct attempt to start preview - camera will reject if not ready
         await self.set_preview_stream(True, port)
 
-        # Build and return preview stream URL
-        # GoPro pushes stream via UDP to local port, receive from localhost
+        # Return preview stream URL
         stream_url = f"udp://127.0.0.1:{port}"
+        logger.info(f"📹 [{self.target}] Preview stream started on port {port}")
 
         return stream_url
-
-    async def _wait_for_camera_ready(self, timeout: float | None = None, poll_interval: float | None = None) -> None:
-        """Wait for camera to be ready (not in BUSY, ENCODING state, and preview stream stopped).
-
-        Args:
-            timeout: Timeout duration (seconds), defaults to configured value
-            poll_interval: Polling interval (seconds), defaults to configured value
-
-        Raises:
-            HttpConnectionError: Timeout or query failed
-        """
-        if timeout is None:
-            timeout = self._timeout.camera_ready_timeout
-        if poll_interval is None:
-            poll_interval = self._timeout.camera_ready_poll_interval
-        logger.debug(f"[{self.target}] waitcameraready...")
-        start_time = asyncio.get_event_loop().time()
-
-        while True:
-            elapsed = asyncio.get_event_loop().time() - start_time
-            if elapsed >= timeout:
-                raise HttpConnectionError(
-                    f"Wait for camera ready timeout ({timeout} seconds): camera still in BUSY, ENCODING or PREVIEW_STREAM state"
-                )
-
-            try:
-                # Query camera status
-                raw_state = await self.get_camera_state()
-                parsed_state = parse_camera_state(raw_state)
-
-                # Check critical status
-                # - BUSY (Status ID 8): camera busy
-                # - ENCODING (Status ID 10): recording
-                # - PREVIEW_STREAM (Status ID 32): whether preview stream is enabled
-                is_busy = get_status_value(parsed_state, StatusId.BUSY)
-                is_encoding = get_status_value(parsed_state, StatusId.ENCODING)
-                is_preview_active = get_status_value(parsed_state, StatusId.PREVIEW_STREAM)
-
-                logger.debug(
-                    f"[{self.target}] Camera status: BUSY={is_busy}, ENCODING={is_encoding}, PREVIEW_STREAM={is_preview_active}"
-                )
-
-                # If not busy and preview stream stopped, camera is ready
-                # Note: Preview stream must be completely stopped (False) to restart, otherwise returns HTTP 409
-                if not is_busy and not is_encoding and not is_preview_active:
-                    logger.info(f"✅ [{self.target}] Camera ready (took {elapsed:.1f}s)")
-                    return
-
-                # Otherwise continue waiting
-                logger.debug(f"[{self.target}] Camera still busy, continue waiting... ({elapsed:.1f}s / {timeout}s)")
-                await asyncio.sleep(poll_interval)
-
-            except Exception as e:
-                logger.warning(f"⚠️ [{self.target}] Failed to query camera status: {e}, continue retry...")
-                await asyncio.sleep(poll_interval)
 
     async def stop_preview(self) -> None:
         """Stop preview stream. Convenience wrapper for set_preview_stream(False)."""
