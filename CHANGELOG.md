@@ -1,3 +1,9 @@
+## [1.0.0-dev.2](https://github.com/sean2077/gopro-sdk-py/compare/1.0.0-dev.1...1.0.0-dev.2) (2025-11-25)
+
+### Fixes
+
+* remove broken links to deleted docs ([343ef2d](https://github.com/sean2077/gopro-sdk-py/commit/343ef2da9c00e6a14b10e56315a80f3e1ccba14e))
+
 ## 1.0.0-dev.1 (2025-11-23)
 
 ### Bug Fixes
