@@ -319,6 +319,4 @@ if __name__ == "__main__":
 
 ## Next Steps
 
-- See [Multi-Camera Examples](multi-camera.md) for controlling multiple cameras
-- See [COHN Configuration](cohn.md) for persistent configuration management
 - Check the [API Reference](../api/client.md) for all available methods
