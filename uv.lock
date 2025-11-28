@@ -531,7 +531,7 @@ wheels = [
 
 [[package]]
 name = "gopro-sdk-py"
-version = "1.0.0.dev2"
+version = "1.0.0.dev3"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },

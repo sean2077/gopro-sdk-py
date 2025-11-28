@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "gopro-sdk-py"
-version = "1.0.0.dev2"
+version = "1.0.0.dev3"
 description = "A Python SDK for controlling GoPro cameras, optimized for multi-camera COHN scenarios"
 readme = "README.md"
 license = { file = "LICENSE" }

@@ -1,3 +1,9 @@
+## [1.0.0-dev.3](https://github.com/sean2077/gopro-sdk-py/compare/1.0.0-dev.2...1.0.0-dev.3) (2025-11-28)
+
+### Fixes
+
+* refactor code structure and remove redundant sections for improved readability and maintainability ([1ef54ae](https://github.com/sean2077/gopro-sdk-py/commit/1ef54aed404ce8b03960691deea0f94431b78120))
+
 ## [1.0.0-dev.2](https://github.com/sean2077/gopro-sdk-py/compare/1.0.0-dev.1...1.0.0-dev.2) (2025-11-25)
 
 ### Fixes
