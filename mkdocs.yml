@@ -114,6 +114,7 @@ nav:
   - User Guide:
       - Quick Start: quickstart.md
       - Basic Usage: examples/basic.md
+      - GUI Example: examples/gui.md
       - Troubleshooting: troubleshooting.md
   - API Reference:
       - Overview: api/overview.md
