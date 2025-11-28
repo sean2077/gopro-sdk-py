@@ -63,7 +63,7 @@ async def main():
         await client.stop_recording()
 
         # Media management
-        media_list = await client.list_media()
+        media_list = await client.get_media_list()
         print(f"Found {len(media_list)} files")
 
 if __name__ == "__main__":
@@ -183,7 +183,7 @@ from gopro_sdk import GoProClient
 async def list_all_media():
     """List all media files on the camera."""
     async with GoProClient("1234", offline_mode=False) as client:
-        media_list = await client.list_media()
+        media_list = await client.get_media_list()
 
         print(f"Found {len(media_list)} files:")
         for media in media_list:
@@ -208,7 +208,7 @@ async def download_latest():
         wifi_ssid="YourWiFi",
         wifi_password="YourPassword"
     ) as client:
-        media_list = await client.list_media()
+        media_list = await client.get_media_list()
 
         if not media_list:
             print("No media files found")
@@ -249,7 +249,7 @@ from gopro_sdk import GoProClient
 async def delete_oldest():
     """Delete the oldest media file."""
     async with GoProClient("1234", offline_mode=False) as client:
-        media_list = await client.list_media()
+        media_list = await client.get_media_list()
 
         if not media_list:
             print("No media files to delete")
@@ -258,8 +258,8 @@ async def delete_oldest():
         oldest = media_list[0]
         print(f"Deleting: {oldest.filename}")
 
-        await client.delete_media(oldest.filename)
-        print("Deleted successfully")
+        await client.delete_file(oldest.filename)
+        print("Deleted successfully"))
 
 if __name__ == "__main__":
     asyncio.run(delete_oldest())

@@ -139,7 +139,7 @@ async def main():
         )
 
         # Now online features are available
-        media_list = await client.list_media()
+        media_list = await client.get_media_list()
         print(f"Found {len(media_list)} media files")
 
 if __name__ == "__main__":
@@ -203,12 +203,12 @@ parsed = await client.get_parsed_state()
 
 ```python
 # List all media files
-media_list = await client.list_media()
+media_list = await client.get_media_list()
 
 # Download a file
 if media_list:
     latest = media_list[-1]
-    await client.download_media(latest, "./downloads/video.mp4")
+    await client.download_file(latest, "./downloads/video.mp4")
 ```
 
 ## Multiple Cameras
@@ -244,17 +244,17 @@ if __name__ == "__main__":
 
 ## Operating Mode Summary
 
-| Feature | Offline Mode | Online Mode |
-|---------|-------------|-------------|
-| Recording control | Yes | Yes |
-| Date/time sync | Yes | Yes |
-| Tag highlight | Yes | Yes |
-| Load preset | Yes | Yes |
-| Sleep | Yes | Yes |
-| Preview stream | No | Yes |
-| Media download | No | Yes |
-| Camera state query | No | Yes |
-| Webcam mode | No | Yes |
+| Feature            | Offline Mode | Online Mode |
+| ------------------ | ------------ | ----------- |
+| Recording control  | Yes          | Yes         |
+| Date/time sync     | Yes          | Yes         |
+| Tag highlight      | Yes          | Yes         |
+| Load preset        | Yes          | Yes         |
+| Sleep              | Yes          | Yes         |
+| Preview stream     | No           | Yes         |
+| Media download     | No           | Yes         |
+| Camera state query | No           | Yes         |
+| Webcam mode        | No           | Yes         |
 
 ## Troubleshooting
 

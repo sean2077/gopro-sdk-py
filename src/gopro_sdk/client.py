@@ -601,7 +601,7 @@ class GoProClient(HealthCheckMixin):
         """
         return await self.http_commands.get_camera_state()
 
-    async def get_parsed_state(self):
+    async def get_parsed_state(self) -> dict[Any, Any]:
         """Get parsed camera status (enum format).
 
         Returns:
@@ -1146,7 +1146,7 @@ class GoProClient(HealthCheckMixin):
             logger.error(error_msg)
             raise BleConnectionError(error_msg) from e
 
-    async def scan_wifi_networks(self, timeout: float | None = None):
+    async def scan_wifi_networks(self, timeout: float | None = None) -> list[Any]:
         """Scan WiFi networks.
 
         Note: Camera must be in AP mode (not connected to any network) to scan.

@@ -6,77 +6,136 @@
       show_source: true
       members:
         - __init__
-        - open_ble
+        - open
         - close
-        - configure_cohn
-        - apply_cohn_config
-        - wait_cohn_ready
+        - offline_mode
+        - is_online
+        - switch_to_online_mode
         - set_shutter
+        - start_recording
+        - stop_recording
+        - set_preview_stream
+        - start_preview
+        - stop_preview
+        - tag_hilight
         - get_camera_state
-        - set_video_resolution
-        - set_video_fps
-        - list_media
-        - download_media
-        - delete_media
+        - get_parsed_state
+        - get_camera_info
+        - set_keep_alive
+        - set_date_time
+        - get_date_time
+        - get_setting
+        - set_setting
+        - get_preset_status
+        - load_preset
+        - load_preset_group
+        - set_digital_zoom
+        - sleep
+        - reboot
+        - get_media_list
+        - download_file
+        - delete_file
+        - delete_all_media
+        - get_media_metadata
+        - get_last_captured_media
+        - set_turbo_mode
         - start_webcam
         - stop_webcam
-        - get_webcam_url
-        - check_health
-        - reconnect
+        - get_webcam_status
+        - start_webcam_preview
+        - webcam_exit
+        - get_webcam_version
+        - reset_cohn
+        - configure_cohn
+        - setup_wifi
+        - scan_wifi_networks
+        - connect_to_wifi
 
 ## Usage Examples
 
-### Basic Connection
+### Basic Connection (Offline Mode)
 
 ```python
 import asyncio
 from gopro_sdk import GoProClient
 
 async def main():
-    client = GoProClient(identifier="1234")
+    # Default offline mode (BLE only)
+    async with GoProClient("1234") as client:
+        # Recording control
+        await client.start_recording()
+        await asyncio.sleep(5)
+        await client.stop_recording()
 
-    try:
-        await client.open_ble()
-        await client.configure_cohn(
-            ssid="your-wifi",
-            password="password"
-        )
-        await client.wait_cohn_ready()
-
-        # Camera is ready to use
-        status = await client.get_camera_state()
-        print(f"Battery: {status.get('battery_percent')}%")
-    finally:
-        await client.close()
+        # Time sync
+        await client.set_date_time()
 
 asyncio.run(main())
 ```
 
-### Recording Control
+### Online Mode (BLE + WiFi)
 
 ```python
-async def record_video(client: GoProClient, duration: int):
-    """Record video for specified duration."""
-    await client.set_shutter(on=True)
-    await asyncio.sleep(duration)
-    await client.set_shutter(on=False)
+import asyncio
+from gopro_sdk import GoProClient
+
+async def main():
+    async with GoProClient(
+        "1234",
+        offline_mode=False,
+        wifi_ssid="YourWiFi",
+        wifi_password="YourPassword"
+    ) as client:
+        # Get camera status
+        status = await client.get_camera_state()
+        print(f"Camera state: {status}")
+
+        # Start preview stream
+        stream_url = await client.start_preview()
+        print(f"Preview: {stream_url}")
+
+asyncio.run(main())
+```
+
+### Dynamic Mode Switching
+
+```python
+async def main():
+    # Start in offline mode
+    async with GoProClient("1234") as client:
+        await client.start_recording()
+        await asyncio.sleep(5)
+        await client.stop_recording()
+
+        # Switch to online mode when needed
+        await client.switch_to_online_mode(
+            wifi_ssid="YourWiFi",
+            wifi_password="YourPassword"
+        )
+
+        # Now online features work
+        media = await client.get_media_list()
+        print(f"Found {len(media)} files")
 ```
 
 ### With Custom Timeouts
 
 ```python
-from gopro_sdk import TimeoutConfig
+from gopro_sdk import GoProClient
+from gopro_sdk.config import TimeoutConfig
 
-custom_timeouts = TimeoutConfig(
-    ble_connect=20.0,
-    http_request=15.0,
-    cohn_ready=60.0
+timeout_config = TimeoutConfig(
+    ble_connect_timeout=30.0,
+    http_request_timeout=60.0,
+    wifi_provision_timeout=120.0,
 )
 
-client = GoProClient(
-    identifier="1234",
-    timeout_config=custom_timeouts
-)
+async with GoProClient(
+    "1234",
+    timeout_config=timeout_config,
+    offline_mode=False,
+) as client:
+    await client.start_recording()
 ```
 
 ## See Also
