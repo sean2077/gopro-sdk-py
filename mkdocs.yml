@@ -113,9 +113,10 @@ nav:
       - Why This SDK: why-this-sdk.md
   - User Guide:
       - Quick Start: quickstart.md
-      - Basic Usage: examples/basic.md
-      - GUI Example: examples/gui.md
       - Troubleshooting: troubleshooting.md
+  - Examples:
+      - Basic Usage: examples/basic.md
+      - GUI Application: examples/gui.md
   - API Reference:
       - Overview: api/overview.md
       - Client: api/client.md
