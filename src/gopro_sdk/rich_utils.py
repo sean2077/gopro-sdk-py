@@ -13,6 +13,15 @@ from rich.progress import (
 )
 from rich.table import Table
 
+__all__ = [
+    "console",
+    "Console",
+    "Progress",
+    "Table",
+    "create_progress",
+    "create_table",
+]
+
 # Global console instance
 console = Console()
 
@@ -52,13 +61,3 @@ def create_table(title: str, *columns: str, **kwargs) -> Table:
     for col in columns:
         table.add_column(col)
     return table
-
-
-__all__ = [
-    "console",
-    "Console",
-    "Progress",
-    "Table",
-    "create_progress",
-    "create_table",
-]

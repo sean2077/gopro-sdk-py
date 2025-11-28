@@ -180,13 +180,13 @@ from gopro_sdk import GoProClient
 
 def test_client_creation():
     """Test that a client can be created."""
-    client = GoProClient(identifier="test")
-    assert client.identifier == "test"
+    client = GoProClient(target="1234")
+    assert client.target == "1234"
 
 @pytest.mark.asyncio
 async def test_async_operation():
     """Test async operations."""
-    client = GoProClient(identifier="test")
+    client = GoProClient(target="1234")
     # Test async code...
 
 @pytest.mark.slow
@@ -278,7 +278,7 @@ from gopro_sdk import GoProClient
 @pytest.mark.asyncio
 async def test_new_feature():
     """Test new feature."""
-    client = GoProClient(identifier="test")
+    client = GoProClient(target="1234")
     # Test implementation...
 ```
 

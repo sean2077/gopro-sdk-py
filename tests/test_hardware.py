@@ -12,13 +12,7 @@ import pytest
 from open_gopro.models.constants import StatusId
 from open_gopro.models.constants.settings import Led, SettingId
 
-from gopro_sdk import (
-    BleScanner,
-    GoProClient,
-    format_camera_state,
-    get_status_value,
-    is_camera_encoding,
-)
+from gopro_sdk import BleScanner, GoProClient, format_camera_state, get_status_value, is_camera_encoding
 from gopro_sdk.commands.media_commands import MediaFile
 
 logger = logging.getLogger(__name__)
@@ -110,7 +104,7 @@ async def test_get_status(gopro_client: GoProClient):
     client = gopro_client
 
     # Get status
-    state = await client.get_status()
+    state = await client.get_camera_state()
 
     # Validate
     assert state, "Status should not be empty"
@@ -242,7 +236,7 @@ async def test_date_time_sync(gopro_client: GoProClient):
 
     # Validate: get timestamp from camera status (indirect validation)
     await asyncio.sleep(1)
-    state = await client.get_status()
+    state = await client.get_camera_state()
     assert state, "Status should not be empty"
 
     # Get and display parsed state
@@ -311,7 +305,7 @@ async def test_settings_management(gopro_client: GoProClient):
     client = gopro_client
 
     # 1. Get current status (including all settings)
-    state = await client.get_status()
+    state = await client.get_camera_state()
     assert "settings" in state, "Status should contain settings field"
 
     settings = state["settings"]
@@ -334,7 +328,7 @@ async def test_settings_management(gopro_client: GoProClient):
         await asyncio.sleep(1)
 
         # Verify setting updated
-        updated_state = await client.get_status()
+        updated_state = await client.get_camera_state()
         updated_value = updated_state["settings"].get(str(led_id.value))
         logger.info(f"Updated LED: {updated_value} ({Led(updated_value).name})")
 

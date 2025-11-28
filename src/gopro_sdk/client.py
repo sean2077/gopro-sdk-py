@@ -12,6 +12,7 @@ from __future__ import annotations
 __all__ = ["GoProClient", "OfflineModeError"]
 
 import asyncio
+import functools
 import logging
 from collections.abc import Callable
 from datetime import datetime
@@ -21,22 +22,11 @@ from typing import Any
 import open_gopro.models.proto.cohn_pb2 as cohn_proto
 import open_gopro.models.proto.response_generic_pb2 as response_proto
 from open_gopro.models.constants import ActionId, FeatureId
-from open_gopro.models.constants.settings import VideoResolution
 
 from .ble_uuid import GoProBleUUID
-from .commands import (
-    BleCommands,
-    HttpCommands,
-    MediaCommands,
-    MediaFile,
-    WebcamCommands,
-)
+from .commands import BleCommands, HttpCommands, MediaCommands, MediaFile, WebcamCommands
 from .config import CohnConfigManager, CohnCredentials, TimeoutConfig
-from .connection import (
-    BleConnectionManager,
-    HealthCheckMixin,
-    HttpConnectionManager,
-)
+from .connection import BleConnectionManager, HealthCheckMixin, HttpConnectionManager
 from .exceptions import BleConnectionError
 from .state_parser import parse_camera_state
 
@@ -47,6 +37,45 @@ class OfflineModeError(Exception):
     """Offline mode error: attempted to call a function that requires online mode."""
 
     pass
+
+
+def _require_online(feature_name: str):
+    """Decorator that ensures the method is called in online mode.
+
+    Args:
+        feature_name: Feature name for error message
+
+    Raises:
+        OfflineModeError: If client is in offline mode
+    """
+
+    def decorator(func):
+        @functools.wraps(func)
+        async def wrapper(self: GoProClient, *args, **kwargs):
+            if self._offline_mode:
+                raise OfflineModeError(
+                    f"❌ {feature_name} requires online mode (BLE+WiFi) to use\n"
+                    f"Solutions:\n"
+                    f"  1. Set offline_mode=False when creating client\n"
+                    f"     >>> client = GoProClient('{self.target}', offline_mode=False)\n"
+                    f"  2. Or switch to online mode at runtime\n"
+                    f"     >>> await client.switch_to_online_mode(wifi_ssid='...', wifi_password='...')\n"
+                    f"\n"
+                    f"Offline mode supports basic features via BLE:\n"
+                    f"  ✅ start_recording() / stop_recording()\n"
+                    f"  ✅ set_date_time()\n"
+                    f"  ✅ tag_hilight()\n"
+                    f"  ✅ load_preset() / load_preset_group()\n"
+                    f"  ✅ sleep()\n"
+                    f"  ❌ Preview (start_preview)\n"
+                    f"  ❌ Download media (download_media)\n"
+                    f"  ❌ Manage files (list_media, delete_media)"
+                )
+            return await func(self, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 class GoProClient(HealthCheckMixin):
@@ -226,148 +255,21 @@ class GoProClient(HealthCheckMixin):
 
         # ========== Online mode workflow below ==========
 
-        # Step 2: If WiFi credentials provided, connect to WiFi
-        if final_wifi_ssid is not None:
-            # Check if COHN credentials exist (determines connection method)
-            credentials = self._config_manager.load(self.target)
-            has_cohn_credentials = (
-                credentials is not None and credentials.certificate and credentials.username and credentials.password
-            )
-            logger.debug(f"[camera {self.target}] COHN credentials check: has_credentials={has_cohn_credentials}")
-            await self.setup_wifi(
-                final_wifi_ssid,
-                final_wifi_password,
-                has_cohn_credentials=has_cohn_credentials,
-            )
-
-        # Step 3: Get or refresh COHN credentials
-        # Note:
-        # - RequestConnectNew automatically creates COHN certificate, no need to call configure_cohn()
-        # - Root CA certificate is valid for 1 year, no need to recreate when IP changes
-        # - Only need to recreate certificate after "Reset Network Settings" on camera (reset_cohn)
-        credentials = self._config_manager.load(self.target)
-
-        # Check if credentials are complete (need certificate)
-        has_valid_credentials = (
-            credentials is not None and credentials.certificate and credentials.username and credentials.password
-        )
-
-        if not has_valid_credentials:
-            # Step 3.1: New camera or credentials incomplete → Get credentials (do not clear certificate!)
-            logger.info("COHN credentials do not exist or are incomplete, fetching from camera...")
-
-            try:
-                # Get COHN status and certificate (RequestConnectNew already created it)
-                credentials = await self._get_cohn_credentials_from_camera()
-                self._config_manager.save(self.target, credentials)
-                logger.info(f"✅ COHN credentials fetched successfully, IP: {credentials.ip_address}")
-
-            except Exception as e:
-                # Failed to get credentials
-                error_msg = (
-                    f"Failed to get COHN credentials: {e}\n"
-                    f"Possible causes:\n"
-                    f"1. Camera not connected to WiFi network\n"
-                    f"2. Router DHCP has not assigned IP address\n"
-                    f"\n"
-                    f"Solutions:\n"
-                    f"- Ensure WiFi credentials are provided when calling open()\n"
-                    f"- Check router DHCP configuration (address pool, lease, etc.)\n"
-                    f"- If problem persists, call client.reset_cohn() to reset certificate"
-                )
-                logger.error(error_msg)
-                raise BleConnectionError(error_msg) from e
-        else:
-            # Step 3.2: Already have credentials (certificate), refresh IP address
-            # WiFi network may have changed, IP will change, but certificate remains valid
-            logger.info("COHN already configured, refreshing network info...")
-
-            try:
-                status = await self.ble_commands.get_cohn_status()
-                state_name = cohn_proto.EnumCOHNNetworkState.Name(status.state)
-                has_ip = bool(status.ipaddress) and bool(status.ipaddress.strip())
-
-                logger.debug(
-                    f"COHN status: state={state_name}, "
-                    f"ip={status.ipaddress or '(empty)'}, "
-                    f"username={status.username or '(empty)'}"
-                )
-
-                # If connecting and has no IP, wait for it to complete connection
-                if status.state == cohn_proto.EnumCOHNNetworkState.COHN_STATE_ConnectingToNetwork and not has_ip:
-                    logger.info(f"⏳ Camera connecting to WiFi (state: {state_name}), waiting to get IP...")
-                    # Poll for IP address (maximum 15 seconds)
-                    for attempt in range(5):
-                        await asyncio.sleep(3)
-                        status = await self.ble_commands.get_cohn_status()
-                        has_ip = bool(status.ipaddress) and bool(status.ipaddress.strip())
-                        if has_ip:
-                            logger.info(f"✅ Camera got IP: {status.ipaddress}")
-                            break
-                        logger.debug(
-                            f"Still waiting for IP (attempt {attempt + 1}/5), state: {cohn_proto.EnumCOHNNetworkState.Name(status.state)}"
-                        )
-
-                # Check if successfully got IP
-                if not has_ip:
-                    logger.warning(
-                        f"⚠️ Camera failed to get IP address (state: {state_name}). "
-                        f"Possible causes:\n"
-                        f"  1. Camera not connected to WiFi\n"
-                        f"  2. WiFi signal too weak\n"
-                        f"  3. Router DHCP service error"
-                    )
-                    # Use saved old credentials (with warning)
-                    logger.warning(
-                        f"Will attempt to use saved IP address: {credentials.ip_address}\n"
-                        f"If connection fails, consider reconfiguring COHN (delete old credentials)."
-                    )
-                    # Don't refresh credentials, use old ones
-                else:
-                    # Successfully got IP, refresh credentials
-                    credentials = CohnCredentials(
-                        username=status.username,
-                        password=status.password,
-                        ip_address=status.ipaddress,
-                        certificate=credentials.certificate,  # Keep old certificate
-                    )
-                    self._config_manager.save(self.target, credentials)
-                    logger.info(f"✅ COHN credentials refreshed, IP: {status.ipaddress}")
-
-            except Exception as e:
-                logger.warning(
-                    f"⚠️ Unable to get status via BLE: {e}\n"
-                    f"Will attempt HTTP connection using saved credentials (IP: {credentials.ip_address}).\n"
-                    f"Note: Ensure computer and camera are on the same WiFi network, otherwise HTTP connection will fail."
-                )
-
-        # Step 4: Initialize HTTP credentials (lazy connection, auto-connect on first request)
-        # Note: Don't actively connect HTTPS, because camera may still be starting HTTPS service
-        # HTTP connection will be automatically established when sending the first request
-        self.http.set_credentials(credentials)
-        logger.info(f"✅ COHN credentials configured: https://{credentials.ip_address}")
+        # Step 2-4: Setup COHN credentials (WiFi connection + credential management)
+        await self._setup_cohn_credentials(final_wifi_ssid, final_wifi_password)
 
         logger.info(f"✅ Camera {self.target} connected successfully (BLE + COHN configured)")
 
-    async def connect(self, wifi_ssid: str | None = None, wifi_password: str | None = None) -> None:
-        """Establish connection. Alias for open().
-
-        This method is kept for compatibility. Using open() is recommended.
-
-        Args:
-            wifi_ssid: WiFi SSID (optional)
-            wifi_password: WiFi password (optional)
-
-        Raises:
-            BleConnectionError: BLE connection failed
-            HttpConnectionError: HTTP connection failed
-        """
-        await self.open(wifi_ssid, wifi_password)
-
     async def close(self) -> None:
         """Close all connections."""
-        await self.http.disconnect()
-        await self.ble.disconnect()
+        # Only disconnect connections that are actually connected
+        # In offline mode, http was never connected, so we shouldn't call disconnect
+        if self.http.is_connected:
+            await self.http.disconnect()
+
+        if self.ble.is_connected:
+            await self.ble.disconnect()
+
         logger.info(f"All connections to camera {self.target} closed")
 
     # ==================== Mode Management ====================
@@ -390,32 +292,159 @@ class GoProClient(HealthCheckMixin):
         """
         return not self._offline_mode
 
-    def _require_online_mode(self, feature_name: str = "This feature") -> None:
-        """Check if in online mode, raise exception in offline mode.
+    async def _setup_cohn_credentials(
+        self,
+        wifi_ssid: str | None = None,
+        wifi_password: str | None = None,
+    ) -> None:
+        """Setup COHN credentials for online mode.
+
+        This is the shared logic used by both open() and switch_to_online_mode().
+        Handles WiFi connection (if credentials provided) and COHN credential management.
+
+        Workflow:
+        1. If WiFi credentials provided, connect camera to WiFi
+        2. Load existing COHN credentials from config
+        3. If no valid credentials, fetch from camera
+        4. If valid credentials exist, refresh IP address
+        5. Configure HTTP client with credentials
 
         Args:
-            feature_name: Feature name (for error message)
+            wifi_ssid: WiFi SSID (optional)
+            wifi_password: WiFi password (optional)
 
         Raises:
-            OfflineModeError: Currently in offline mode
+            BleConnectionError: WiFi connection or COHN setup failed
         """
-        if self._offline_mode:
-            raise OfflineModeError(
-                f"❌ {feature_name} requires online mode (BLE+WiFi) to use\n"
-                f"Solutions:\n"
-                f"  1. Set offline_mode=False when creating client\n"
-                f"     >>> client = GoProClient('{self.target}', offline_mode=False)\n"
-                f"  2. Or switch to online mode at runtime\n"
-                f"     >>> await client.switch_to_online_mode(wifi_ssid='...', wifi_password='...')\n"
-                f"\n"
-                f"Offline mode only supports basic features via BLE:\n"
-                f"  ✅ start_recording() / stop_recording()\n"
-                f"  ✅ set_date_time()\n"
-                f"  ✅ tag_hilight()\n"
-                f"  ❌ Preview (start_preview)\n"
-                f"  ❌ Download media (download_media)\n"
-                f"  ❌ Manage files (list_media, delete_media)"
+        # Step 1: If WiFi credentials provided, connect to WiFi
+        if wifi_ssid is not None:
+            credentials = self._config_manager.load(self.target)
+            has_cohn_credentials = (
+                credentials is not None and credentials.certificate and credentials.username and credentials.password
             )
+            logger.debug(f"[camera {self.target}] COHN credentials check: has_credentials={has_cohn_credentials}")
+            await self.setup_wifi(
+                wifi_ssid,
+                wifi_password,
+                has_cohn_credentials=has_cohn_credentials,
+            )
+
+        # Step 2: Get or refresh COHN credentials
+        # Note:
+        # - RequestConnectNew automatically creates COHN certificate, no need to call configure_cohn()
+        # - Root CA certificate is valid for 1 year, no need to recreate when IP changes
+        # - Only need to recreate certificate after "Reset Network Settings" on camera (reset_cohn)
+        credentials = self._config_manager.load(self.target)
+
+        # Check if credentials are complete (need certificate)
+        has_valid_credentials = (
+            credentials is not None and credentials.certificate and credentials.username and credentials.password
+        )
+
+        if not has_valid_credentials:
+            # New camera or credentials incomplete -> Get credentials
+            logger.info("COHN credentials do not exist or are incomplete, fetching from camera...")
+
+            try:
+                credentials = await self._get_cohn_credentials_from_camera()
+                self._config_manager.save(self.target, credentials)
+                logger.info(f"✅ COHN credentials fetched successfully, IP: {credentials.ip_address}")
+
+            except Exception as e:
+                error_msg = (
+                    f"Failed to get COHN credentials: {e}\n"
+                    f"Possible causes:\n"
+                    f"1. Camera not connected to WiFi network\n"
+                    f"2. Router DHCP has not assigned IP address\n"
+                    f"\n"
+                    f"Solutions:\n"
+                    f"- Ensure WiFi credentials are provided when calling open()\n"
+                    f"- Check router DHCP configuration (address pool, lease, etc.)\n"
+                    f"- If problem persists, call client.reset_cohn() to reset certificate"
+                )
+                logger.error(error_msg)
+                raise BleConnectionError(error_msg) from e
+        else:
+            # Already have credentials (certificate), refresh IP address
+            # WiFi network may have changed, IP will change, but certificate remains valid
+            logger.info("COHN already configured, refreshing network info...")
+            credentials = await self._refresh_cohn_ip_address(credentials)
+
+        # Step 3: Initialize HTTP credentials (lazy connection, auto-connect on first request)
+        self.http.set_credentials(credentials)
+        logger.info(f"✅ COHN credentials configured: https://{credentials.ip_address}")
+
+    async def _refresh_cohn_ip_address(self, credentials: CohnCredentials) -> CohnCredentials:
+        """Refresh COHN IP address from camera status.
+
+        Args:
+            credentials: Existing COHN credentials (with certificate)
+
+        Returns:
+            Updated credentials (possibly with new IP address)
+        """
+        try:
+            status = await self.ble_commands.get_cohn_status()
+            state_name = cohn_proto.EnumCOHNNetworkState.Name(status.state)
+            has_ip = bool(status.ipaddress) and bool(status.ipaddress.strip())
+
+            logger.debug(
+                f"COHN status: state={state_name}, "
+                f"ip={status.ipaddress or '(empty)'}, "
+                f"username={status.username or '(empty)'}"
+            )
+
+            # If connecting and has no IP, wait for it to complete connection
+            if status.state == cohn_proto.EnumCOHNNetworkState.COHN_STATE_ConnectingToNetwork and not has_ip:
+                logger.info(f"⏳ Camera connecting to WiFi (state: {state_name}), waiting to get IP...")
+                # Poll for IP address using configured timeout values
+                max_attempts = self._timeout.ip_wait_max_attempts
+                interval = self._timeout.ip_wait_interval
+                for attempt in range(max_attempts):
+                    await asyncio.sleep(interval)
+                    status = await self.ble_commands.get_cohn_status()
+                    has_ip = bool(status.ipaddress) and bool(status.ipaddress.strip())
+                    if has_ip:
+                        logger.info(f"✅ Camera got IP: {status.ipaddress}")
+                        break
+                    logger.debug(
+                        f"Still waiting for IP (attempt {attempt + 1}/{max_attempts}), "
+                        f"state: {cohn_proto.EnumCOHNNetworkState.Name(status.state)}"
+                    )
+
+            # Check if successfully got IP
+            if not has_ip:
+                logger.warning(
+                    f"⚠️ Camera failed to get IP address (state: {state_name}). "
+                    f"Possible causes:\n"
+                    f"  1. Camera not connected to WiFi\n"
+                    f"  2. WiFi signal too weak\n"
+                    f"  3. Router DHCP service error"
+                )
+                logger.warning(
+                    f"Will attempt to use saved IP address: {credentials.ip_address}\n"
+                    f"If connection fails, consider reconfiguring COHN (delete old credentials)."
+                )
+                return credentials  # Return unchanged credentials
+
+            # Successfully got IP, refresh credentials
+            updated_credentials = CohnCredentials(
+                username=status.username,
+                password=status.password,
+                ip_address=status.ipaddress,
+                certificate=credentials.certificate,  # Keep old certificate
+            )
+            self._config_manager.save(self.target, updated_credentials)
+            logger.info(f"✅ COHN credentials refreshed, IP: {status.ipaddress}")
+            return updated_credentials
+
+        except Exception as e:
+            logger.warning(
+                f"⚠️ Unable to get status via BLE: {e}\n"
+                f"Will attempt HTTP connection using saved credentials (IP: {credentials.ip_address}).\n"
+                f"Note: Ensure computer and camera are on the same WiFi network, otherwise HTTP connection will fail."
+            )
+            return credentials  # Return unchanged credentials on error
 
     async def switch_to_online_mode(self, wifi_ssid: str | None = None, wifi_password: str | None = None) -> None:
         """Switch to online mode (dynamic switching).
@@ -456,84 +485,25 @@ class GoProClient(HealthCheckMixin):
         if not self.ble.is_connected:
             raise BleConnectionError("BLE not connected, cannot switch to online mode")
 
-        # Execute online mode configuration workflow (same as steps 2-4 in open() method)
-        # Step 1: If WiFi credentials provided, connect to WiFi
-        if final_wifi_ssid is not None:
-            credentials = self._config_manager.load(self.target)
-            has_cohn_credentials = (
-                credentials is not None and credentials.certificate and credentials.username and credentials.password
-            )
-            await self.setup_wifi(
-                final_wifi_ssid,
-                final_wifi_password,
-                has_cohn_credentials=has_cohn_credentials,
-            )
-
-        # Step 2: Get or refresh COHN credentials
-        credentials = self._config_manager.load(self.target)
-        has_valid_credentials = (
-            credentials is not None and credentials.certificate and credentials.username and credentials.password
-        )
-
-        if not has_valid_credentials:
-            logger.info("COHN credentials do not exist or are incomplete, fetching from camera...")
-            try:
-                credentials = await self._get_cohn_credentials_from_camera()
-                self._config_manager.save(self.target, credentials)
-                logger.info(f"✅ COHN credentials fetched successfully, IP: {credentials.ip_address}")
-            except Exception as e:
-                error_msg = (
-                    f"Failed to get COHN credentials: {e}\n"
-                    f"Please ensure:\n"
-                    f"1. Camera is connected to WiFi\n"
-                    f"2. WiFi credentials were provided when calling switch_to_online_mode()"
-                )
-                logger.error(error_msg)
-                raise BleConnectionError(error_msg) from e
-        else:
-            logger.info("COHN already configured, refreshing network info...")
-            try:
-                status = await self.ble_commands.get_cohn_status()
-                has_ip = bool(status.ipaddress) and bool(status.ipaddress.strip())
-
-                if has_ip:
-                    credentials = CohnCredentials(
-                        username=status.username,
-                        password=status.password,
-                        ip_address=status.ipaddress,
-                        certificate=credentials.certificate,
-                    )
-                    self._config_manager.save(self.target, credentials)
-                    logger.info(f"✅ COHN credentials refreshed, IP: {status.ipaddress}")
-                else:
-                    logger.warning(f"⚠️ Camera didn't get IP, using saved IP: {credentials.ip_address}")
-            except Exception as e:
-                logger.warning(f"⚠️ Failed to get status: {e}, using saved credentials")
-
-        # Step 3: Initialize HTTP credentials
-        self.http.set_credentials(credentials)
-        logger.info(f"✅ COHN credentials configured: https://{credentials.ip_address}")
+        # Setup COHN credentials (reuse the same logic as open())
+        await self._setup_cohn_credentials(final_wifi_ssid, final_wifi_password)
 
         # Switch mode flag
         self._offline_mode = False
         logger.info("✅ Switched to online mode (BLE+WiFi)")
 
-    # ==================== Recording Control (BLE/HTTP based on mode) ====================
+    # ==================== Recording Control (BLE preferred) ====================
 
     async def set_shutter(self, enable: bool) -> None:
         """Control recording shutter.
 
-        Uses BLE in offline mode, HTTP in online mode.
+        Always uses BLE for more reliable recording control.
 
         Args:
             enable: True to start recording, False to stop recording
         """
-        if self.offline_mode:
-            # Offline mode: control via BLE
-            await self.ble_commands.set_shutter(enable)
-        else:
-            # Online mode: control via HTTP
-            await self.http_commands.set_shutter(enable)
+        # Always use BLE for recording control (more reliable)
+        await self.ble_commands.set_shutter(enable)
 
     async def start_recording(self) -> None:
         """Start recording. Convenience wrapper for set_shutter(True)."""
@@ -543,6 +513,7 @@ class GoProClient(HealthCheckMixin):
         """Stop recording. Convenience wrapper for set_shutter(False)."""
         await self.set_shutter(False)
 
+    @_require_online("Preview stream control")
     async def set_preview_stream(self, enable: bool, port: int | None = None) -> None:
         """Control preview stream.
 
@@ -553,7 +524,6 @@ class GoProClient(HealthCheckMixin):
         Raises:
             OfflineModeError: This feature is not supported in offline mode
         """
-        self._require_online_mode("Preview stream control")
         await self.http_commands.set_preview_stream(enable, port)
 
     async def start_preview(self, port: int = 8554) -> str:
@@ -586,7 +556,7 @@ class GoProClient(HealthCheckMixin):
             pass  # Not recording or already stopped
 
         # Brief pause to let camera update state
-        await asyncio.sleep(0.2)
+        await asyncio.sleep(self._timeout.preview_state_settle_delay)
 
         # Direct attempt to start preview - camera will reject if not ready
         await self.set_preview_stream(True, port)
@@ -602,13 +572,18 @@ class GoProClient(HealthCheckMixin):
         await self.set_preview_stream(False)
 
     async def tag_hilight(self) -> None:
-        """Tag highlight (during recording)."""
-        await self.http_commands.tag_hilight()
+        """Tag highlight (during recording).
+
+        Note:
+            Always uses BLE command for more reliable operation.
+        """
+        await self.ble_commands.tag_hilight()
 
     # ==================== Camera Status (delegated to http_commands) ====================
 
+    @_require_online("Get camera status")
     async def get_camera_state(self) -> dict[str, Any]:
-        """Get complete camera status (raw format).
+        """Get camera status (raw format).
 
         Returns:
             Raw status dictionary in format:
@@ -624,16 +599,7 @@ class GoProClient(HealthCheckMixin):
         Raises:
             OfflineModeError: This feature is not supported in offline mode
         """
-        self._require_online_mode("Get camera status")
         return await self.http_commands.get_camera_state()
-
-    async def get_status(self) -> dict[str, Any]:
-        """Get complete camera status. Alias for get_camera_state().
-
-        Returns:
-            Raw status dictionary
-        """
-        return await self.get_camera_state()
 
     async def get_parsed_state(self):
         """Get parsed camera status (enum format).
@@ -653,10 +619,10 @@ class GoProClient(HealthCheckMixin):
             >>> if state[StatusId.ENCODING]:
             ...     print("🔴 Camera is recording")
         """
-
         raw_state = await self.get_camera_state()
         return parse_camera_state(raw_state)
 
+    @_require_online("Get camera info")
     async def get_camera_info(self) -> dict[str, Any]:
         """Get camera information.
 
@@ -666,16 +632,15 @@ class GoProClient(HealthCheckMixin):
         Raises:
             OfflineModeError: This feature is not supported in offline mode
         """
-        self._require_online_mode("Get camera info")
         return await self.http_commands.get_camera_info()
 
+    @_require_online("Keep-alive signal")
     async def set_keep_alive(self) -> None:
         """Send keep-alive signal.
 
         Raises:
             OfflineModeError: This feature is not supported in offline mode
         """
-        self._require_online_mode("Keep-alive signal")
         await self.http_commands.set_keep_alive()
 
     # ==================== Date Time (delegated to http_commands) ====================
@@ -689,15 +654,12 @@ class GoProClient(HealthCheckMixin):
             is_dst: Whether daylight saving time
 
         Note:
-            Uses BLE command in offline mode, HTTP command in online mode
+            Always uses BLE command for time sync (more reliable than HTTP)
         """
-        if self._offline_mode:
-            # Offline mode: use BLE command
-            await self.ble_commands.set_date_time(dt, tz_offset, is_dst)
-        else:
-            # Online mode: use HTTP command
-            await self.http_commands.set_date_time(dt, tz_offset, is_dst)
+        # Always use BLE for time sync (more reliable)
+        await self.ble_commands.set_date_time(dt, tz_offset, is_dst)
 
+    @_require_online("Get camera time")
     async def get_date_time(self) -> datetime:
         """Get camera date and time.
 
@@ -707,11 +669,11 @@ class GoProClient(HealthCheckMixin):
         Raises:
             OfflineModeError: This feature is not supported in offline mode
         """
-        self._require_online_mode("Get camera time")
         return await self.http_commands.get_date_time()
 
     # ==================== Settings Management (delegated to http_commands) ====================
 
+    @_require_online("Get setting")
     async def get_setting(self, setting_id: int) -> Any:
         """Get the value of specified setting.
 
@@ -724,9 +686,9 @@ class GoProClient(HealthCheckMixin):
         Raises:
             OfflineModeError: This feature is not supported in offline mode
         """
-        self._require_online_mode("Get setting")
         return await self.http_commands.get_setting(setting_id)
 
+    @_require_online("Set setting")
     async def set_setting(self, setting_id: int, value: int) -> None:
         """Modify the value of specified setting.
 
@@ -737,11 +699,11 @@ class GoProClient(HealthCheckMixin):
         Raises:
             OfflineModeError: This feature is not supported in offline mode
         """
-        self._require_online_mode("Set parameter")
         await self.http_commands.set_setting(setting_id, value)
 
     # ==================== Preset Management (delegated to http_commands) ====================
 
+    @_require_online("Get preset status")
     async def get_preset_status(self, include_hidden: bool = False) -> dict[str, Any]:
         """Get preset status.
 
@@ -754,7 +716,6 @@ class GoProClient(HealthCheckMixin):
         Raises:
             OfflineModeError: This feature is not supported in offline mode
         """
-        self._require_online_mode("Get preset status")
         return await self.http_commands.get_preset_status(include_hidden)
 
     async def load_preset(self, preset_id: int) -> None:
@@ -763,11 +724,10 @@ class GoProClient(HealthCheckMixin):
         Args:
             preset_id: Preset ID
 
-        Raises:
-            OfflineModeError: This feature is not supported in offline mode
+        Note:
+            Always uses BLE command for more reliable operation.
         """
-        self._require_online_mode("Load preset")
-        await self.http_commands.load_preset(preset_id)
+        await self.ble_commands.load_preset(preset_id)
 
     async def load_preset_group(self, group_id: int) -> None:
         """Load preset group.
@@ -775,14 +735,14 @@ class GoProClient(HealthCheckMixin):
         Args:
             group_id: Preset group ID
 
-        Raises:
-            OfflineModeError: This feature is not supported in offline mode
+        Note:
+            Always uses BLE command for more reliable operation.
         """
-        self._require_online_mode("Load preset group")
-        await self.http_commands.load_preset_group(group_id)
+        await self.ble_commands.load_preset_group(group_id)
 
-    # ==================== Other Controls (delegated to http_commands) ====================
+    # ==================== Other Controls ====================
 
+    @_require_online("Digital zoom")
     async def set_digital_zoom(self, percent: int) -> None:
         """Set digital zoom.
 
@@ -792,22 +752,29 @@ class GoProClient(HealthCheckMixin):
         Raises:
             OfflineModeError: This feature is not supported in offline mode
         """
-        self._require_online_mode("Digital zoom")
         await self.http_commands.set_digital_zoom(percent)
+
+    async def sleep(self) -> None:
+        """Put camera to sleep.
+
+        Note:
+            Uses BLE command which works in both online and offline modes.
+        """
+        await self.ble_commands.sleep()
 
     async def reboot(self) -> None:
         """Reboot camera.
 
-        Raises:
-            OfflineModeError: This feature is not supported in offline mode
+        Note:
+            Uses BLE command which works in both online and offline modes.
         """
-        self._require_online_mode("Reboot camera")
-        await self.http_commands.reboot()
+        await self.ble_commands.reboot()
 
     # ==================== Media Management (delegated to media_commands) ====================
 
-    async def get_media_list(self):
-        """List all media files.
+    @_require_online("Media file list")
+    async def get_media_list(self) -> list[MediaFile]:
+        """Get list of all media files.
 
         Returns:
             List of media files (MediaFile objects)
@@ -815,17 +782,9 @@ class GoProClient(HealthCheckMixin):
         Raises:
             OfflineModeError: This feature is not supported in offline mode
         """
-        self._require_online_mode("Media file list")
         return await self.media_commands.get_media_list()
 
-    async def list_media(self) -> list[MediaFile]:
-        """List all media files. Alias for get_media_list().
-
-        Returns:
-            List of media files (MediaFile objects)
-        """
-        return await self.get_media_list()
-
+    @_require_online("Media download")
     async def download_file(
         self,
         media_file: MediaFile | str,
@@ -845,21 +804,9 @@ class GoProClient(HealthCheckMixin):
         Raises:
             OfflineModeError: This feature is not supported in offline mode
         """
-        self._require_online_mode("Media download")
         return await self.media_commands.download_file(media_file, save_path, progress_callback)
 
-    async def download_media(self, media_file: MediaFile | str, save_path: str | Path) -> int:
-        """Download media file. Alias for download_file().
-
-        Args:
-            media_file: MediaFile object or file path
-            save_path: Save path
-
-        Returns:
-            Number of bytes downloaded
-        """
-        return await self.download_file(media_file, save_path)
-
+    @_require_online("Delete media file")
     async def delete_file(self, path: str) -> None:
         """Delete single media file.
 
@@ -869,26 +816,18 @@ class GoProClient(HealthCheckMixin):
         Raises:
             OfflineModeError: This feature is not supported in offline mode
         """
-        self._require_online_mode("Delete media file")
         await self.media_commands.delete_file(path)
 
-    async def delete_media(self, path: str) -> None:
-        """Delete single media file. Alias for delete_file().
-
-        Args:
-            path: File path
-        """
-        await self.delete_file(path)
-
+    @_require_online("Delete all media")
     async def delete_all_media(self) -> None:
         """Delete all media files.
 
         Raises:
             OfflineModeError: This feature is not supported in offline mode
         """
-        self._require_online_mode("Delete all media")
         await self.media_commands.delete_all_media()
 
+    @_require_online("Get media metadata")
     async def get_media_metadata(self, path: str) -> dict[str, Any]:
         """Get media file metadata.
 
@@ -901,9 +840,9 @@ class GoProClient(HealthCheckMixin):
         Raises:
             OfflineModeError: This feature is not supported in offline mode
         """
-        self._require_online_mode("Get media metadata")
         return await self.media_commands.get_media_metadata(path)
 
+    @_require_online("Get last captured media")
     async def get_last_captured_media(self) -> dict[str, Any]:
         """Get last captured media file information.
 
@@ -913,9 +852,9 @@ class GoProClient(HealthCheckMixin):
         Raises:
             OfflineModeError: This feature is not supported in offline mode
         """
-        self._require_online_mode("Get last captured media")
         return await self.media_commands.get_last_captured_media()
 
+    @_require_online("Turbo transfer mode")
     async def set_turbo_mode(self, enable: bool) -> None:
         """Enable/disable Turbo transfer mode.
 
@@ -925,12 +864,12 @@ class GoProClient(HealthCheckMixin):
         Raises:
             OfflineModeError: This feature is not supported in offline mode
         """
-        self._require_online_mode("Turbo transfer mode")
         await self.media_commands.set_turbo_mode(enable)
 
     # ==================== Webcam Mode (delegated to webcam_commands) ====================
 
-    async def webcam_start(
+    @_require_online("Webcam mode")
+    async def start_webcam(
         self,
         resolution: int | None = None,
         fov: int | None = None,
@@ -951,30 +890,10 @@ class GoProClient(HealthCheckMixin):
         Raises:
             OfflineModeError: This feature is not supported in offline mode
         """
-        self._require_online_mode("Webcam mode")
         return await self.webcam_commands.webcam_start(resolution, fov, port, protocol)
 
-    async def start_webcam(
-        self,
-        resolution: int = VideoResolution.NUM_720,
-        fov: int = 0,
-    ) -> dict[str, Any]:
-        """Start Webcam mode with common parameters.
-
-        Args:
-            resolution: Resolution, default 12 (720p)
-            fov: Field of view, default 0 (Wide)
-
-        Returns:
-            Webcam response
-
-        Raises:
-            OfflineModeError: This feature is not supported in offline mode
-        """
-        self._require_online_mode("Webcam mode")
-        return await self.webcam_start(resolution, fov)
-
-    async def webcam_stop(self) -> dict[str, Any]:
+    @_require_online("Webcam mode")
+    async def stop_webcam(self) -> dict[str, Any]:
         """Stop Webcam mode.
 
         Returns:
@@ -983,18 +902,10 @@ class GoProClient(HealthCheckMixin):
         Raises:
             OfflineModeError: This feature is not supported in offline mode
         """
-        self._require_online_mode("Webcam mode")
         return await self.webcam_commands.webcam_stop()
 
-    async def stop_webcam(self) -> dict[str, Any]:
-        """Stop Webcam mode. Alias for webcam_stop().
-
-        Returns:
-            Webcam response
-        """
-        return await self.webcam_stop()
-
-    async def webcam_status(self) -> dict[str, Any]:
+    @_require_online("Webcam status")
+    async def get_webcam_status(self) -> dict[str, Any]:
         """Get Webcam status.
 
         Returns:
@@ -1003,10 +914,10 @@ class GoProClient(HealthCheckMixin):
         Raises:
             OfflineModeError: This feature is not supported in offline mode
         """
-        self._require_online_mode("Webcam status")
         return await self.webcam_commands.webcam_status()
 
-    async def webcam_preview(self) -> dict[str, Any]:
+    @_require_online("Webcam preview")
+    async def start_webcam_preview(self) -> dict[str, Any]:
         """Start Webcam preview.
 
         Returns:
@@ -1015,9 +926,9 @@ class GoProClient(HealthCheckMixin):
         Raises:
             OfflineModeError: This feature is not supported in offline mode
         """
-        self._require_online_mode("Webcam preview")
         return await self.webcam_commands.webcam_preview()
 
+    @_require_online("Webcam mode")
     async def webcam_exit(self) -> dict[str, Any]:
         """Exit Webcam mode.
 
@@ -1027,9 +938,9 @@ class GoProClient(HealthCheckMixin):
         Raises:
             OfflineModeError: This feature is not supported in offline mode
         """
-        self._require_online_mode("Webcam mode")
         return await self.webcam_commands.webcam_exit()
 
+    @_require_online("Webcam version")
     async def get_webcam_version(self) -> str:
         """Get Webcam implementation version.
 
@@ -1039,7 +950,6 @@ class GoProClient(HealthCheckMixin):
         Raises:
             OfflineModeError: This feature is not supported in offline mode
         """
-        self._require_online_mode("Webcam version")
         return await self.webcam_commands.get_webcam_version()
 
     # ==================== COHN Configuration (delegated to ble_commands) ====================

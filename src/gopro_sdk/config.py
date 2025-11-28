@@ -93,12 +93,23 @@ class TimeoutConfig:
     http_keepalive_timeout_threshold: int = 4  # Consecutive timeout threshold (trigger warning)
     http_keepalive_fatal_threshold: int = 6  # Consecutive timeout threshold (trigger disconnection determination)
 
+    # IP address acquisition configuration
+    ip_wait_max_attempts: int = 5  # Maximum attempts when waiting for IP address
+    ip_wait_interval: float = 3.0  # Interval between IP address checks (seconds)
+
+    # Preview stream configuration
+    preview_state_settle_delay: float = 0.2  # Delay for camera state to settle before starting preview
+
 
 class CohnConfigManager:
     """COHN configuration persistence manager.
 
     Uses Repository pattern to encapsulate TinyDB operations.
     Database file is stored in user data directory.
+
+    Supports context manager protocol for automatic resource cleanup:
+        with CohnConfigManager() as manager:
+            manager.save(serial, credentials)
     """
 
     def __init__(self, db_path: Path | None = None) -> None:
@@ -114,6 +125,23 @@ class CohnConfigManager:
         self._db = TinyDB(str(db_path))
         self._table = self._db.table("credentials")
         logger.info(f"COHN configuration database initialized: {db_path}")
+
+    def __enter__(self) -> CohnConfigManager:
+        """Enter context manager."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        """Exit context manager and close database."""
+        self.close()
+
+    def __del__(self) -> None:
+        """Cleanup: ensure database is closed when object is destroyed."""
+        try:
+            if hasattr(self, "_db") and self._db is not None:
+                self._db.close()
+        except Exception:
+            # Silently ignore errors during cleanup
+            pass
 
     def save(self, serial: str, credentials: CohnCredentials) -> None:
         """Save or update camera COHN credentials.
@@ -205,5 +233,7 @@ class CohnConfigManager:
 
     def close(self) -> None:
         """Close database connection."""
-        self._db.close()
-        logger.debug("COHN configuration database closed")
+        if hasattr(self, "_db") and self._db is not None:
+            self._db.close()
+            self._db = None
+            logger.debug("COHN configuration database closed")

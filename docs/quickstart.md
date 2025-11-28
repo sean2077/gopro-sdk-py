@@ -7,7 +7,7 @@ This guide will help you get started with the GoPro SDK for Python in just a few
 - Python 3.12 or higher
 - GoPro camera (HERO 9 or later recommended)
 - Bluetooth adapter on your computer
-- WiFi network for COHN mode
+- WiFi network for online mode (optional)
 
 ## Installation
 
@@ -16,9 +16,6 @@ This guide will help you get started with the GoPro SDK for Python in just a few
     ```bash
     uv add gopro-sdk-py
     ```
-
-    !!! tip "Why uv?"
-        [uv](https://github.com/astral-sh/uv) is a fast Python package installer and resolver, significantly faster than pip.
 
 === "Using pip"
 
@@ -50,7 +47,7 @@ This guide will help you get started with the GoPro SDK for Python in just a few
 
 Note the last 4 digits of your camera's name (e.g., "GoPro 1234" → use "1234")
 
-### 2. Simple Connection Test
+### 2. Offline Mode (Default, BLE Only)
 
 Create a file `test_connection.py`:
 
@@ -60,21 +57,22 @@ from gopro_sdk import GoProClient
 
 async def main():
     # Replace "1234" with your camera's identifier
-    client = GoProClient(identifier="1234")
+    # Default is offline mode (BLE only)
+    async with GoProClient("1234") as client:
+        print("Connected to camera via BLE!")
 
-    try:
-        print("Connecting to camera...")
-        await client.open_ble()
-        print("Connected successfully!")
+        # Control recording (works in offline mode)
+        await client.start_recording()
+        await asyncio.sleep(5)
+        await client.stop_recording()
 
-        # Get camera status
-        status = await client.get_camera_state()
-        print(f"Battery: {status.get('battery_percent')}%")
+        # Sync time
+        await client.set_date_time()
 
-    finally:
-        await client.close()
+        print("Done!")
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 Run it:
@@ -83,147 +81,134 @@ Run it:
 python test_connection.py
 ```
 
-### 3. Set Up COHN (Recommended)
+### 3. Online Mode (BLE + WiFi)
 
-COHN (Camera on Home Network) allows you to control the camera over WiFi, which is faster and more reliable than BLE for many operations.
+For features like preview stream and media download, use online mode:
 
 ```python
 import asyncio
 from gopro_sdk import GoProClient
 
 async def main():
-    client = GoProClient(identifier="1234")
+    # Online mode with WiFi credentials
+    async with GoProClient(
+        "1234",
+        offline_mode=False,
+        wifi_ssid="YourWiFiName",
+        wifi_password="YourWiFiPassword"
+    ) as client:
+        print("Connected via BLE + WiFi!")
 
-    try:
-        # Connect via BLE first
-        await client.open_ble()
+        # Get camera status (requires online mode)
+        status = await client.get_camera_state()
+        print(f"Camera state: {status}")
 
-        # Configure COHN
-        await client.configure_cohn(
-            ssid="YourWiFiName",
-            password="YourWiFiPassword"
-        )
+        # Start preview stream
+        stream_url = await client.start_preview()
+        print(f"Preview URL: {stream_url}")
 
-        # Wait for COHN to be ready
-        await client.wait_cohn_ready(timeout=30)
-        print("COHN is ready!")
-
-        # Now you can use faster HTTP commands
-        await client.set_shutter(on=True)  # Start recording
+        # Start recording
+        await client.start_recording()
         await asyncio.sleep(5)
-        await client.set_shutter(on=False)  # Stop recording
+        await client.stop_recording()
 
-    finally:
-        await client.close()
-
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
-### 4. Save COHN Configuration
+### 4. Dynamic Mode Switching
 
-To avoid reconfiguring COHN every time:
+Start in offline mode and switch to online when needed:
 
 ```python
 import asyncio
-from gopro_sdk import GoProClient, CohnConfigManager
+from gopro_sdk import GoProClient
 
 async def main():
-    client = GoProClient(identifier="1234")
-    config_manager = CohnConfigManager()
+    # Start in offline mode
+    async with GoProClient("1234") as client:
+        # Works in offline mode
+        await client.start_recording()
+        await asyncio.sleep(5)
+        await client.stop_recording()
 
-    # Try to load saved config
-    saved_config = config_manager.load_config("1234")
+        # Switch to online mode when needed
+        await client.switch_to_online_mode(
+            wifi_ssid="YourWiFiName",
+            wifi_password="YourWiFiPassword"
+        )
 
-    try:
-        await client.open_ble()
+        # Now online features are available
+        media_list = await client.list_media()
+        print(f"Found {len(media_list)} media files")
 
-        if saved_config:
-            print("Using saved configuration...")
-            await client.apply_cohn_config(saved_config)
-        else:
-            print("Configuring COHN for the first time...")
-            config = await client.configure_cohn(
-                ssid="YourWiFiName",
-                password="YourWiFiPassword"
-            )
-            config_manager.save_config("1234", config)
-
-        await client.wait_cohn_ready()
-        print("Ready to go!")
-
-    finally:
-        await client.close()
-
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## Common Operations
 
-!!! example "Take a Photo"
-
-    ```python
-    await client.set_shutter(on=True)
-    ```
-
-!!! example "Start/Stop Video Recording"
-
-    === "Basic"
-
-        ```python
-        # Start recording
-        await client.set_shutter(on=True)
-
-        # Record for 10 seconds
-        await asyncio.sleep(10)
-
-        # Stop recording
-        await client.set_shutter(on=False)
-        ```
-
-    === "With Context Manager"
-
-        ```python
-        async with GoProClient(target="1234") as client:
-            # Start recording
-            await client.start_recording()
-            await asyncio.sleep(10)
-            await client.stop_recording()
-            # Connection closed automatically
-        ```
-
-!!! example "Check Camera Status"
-
-    ```python
-    status = await client.get_camera_state()
-    print(f"Battery: {status.get('battery_percent')}%")
-    print(f"Recording: {status.get('is_recording')}")
-    print(f"SD Space: {status.get('space_remaining')} MB")
-    ```
-
-    !!! info "Requires Online Mode"
-        This operation requires WiFi connection. Make sure COHN is configured or use `offline_mode=False`.
-
-### Set Video Resolution
+### Recording Control
 
 ```python
-from open_gopro.models.constants.settings import VideoResolution
+# Start recording
+await client.start_recording()
 
-await client.set_video_resolution(VideoResolution.RES_1080)
+# Stop recording
+await client.stop_recording()
+
+# Or use set_shutter directly
+await client.set_shutter(True)   # Start
+await client.set_shutter(False)  # Stop
 ```
 
-### Download Latest Media
+### Tag Highlight
 
 ```python
-# List media files
+# Tag highlight during recording (works offline)
+await client.tag_hilight()
+```
+
+### Load Preset
+
+```python
+# Load preset by ID (works offline)
+await client.load_preset(preset_id=0)
+
+# Load preset group
+await client.load_preset_group(group_id=1000)
+```
+
+### Camera Control
+
+```python
+# Put camera to sleep (works offline)
+await client.sleep()
+
+# Sync date/time (works offline)
+await client.set_date_time()
+```
+
+### Check Camera Status (Online Mode)
+
+```python
+# Get full camera state
+status = await client.get_camera_state()
+
+# Get parsed state with enum keys
+parsed = await client.get_parsed_state()
+```
+
+### Download Media (Online Mode)
+
+```python
+# List all media files
 media_list = await client.list_media()
 
-# Download the latest file
+# Download a file
 if media_list:
-    latest = media_list[0]
-    await client.download_media(
-        filename=latest['filename'],
-        local_path="./downloads/"
-    )
+    latest = media_list[-1]
+    await client.download_media(latest, "./downloads/video.mp4")
 ```
 
 ## Multiple Cameras
@@ -235,31 +220,41 @@ import asyncio
 from gopro_sdk import MultiCameraManager
 
 async def main():
-    cameras = {
-        "cam1": "1234",
-        "cam2": "5678",
-    }
-
-    manager = MultiCameraManager()
-
-    try:
+    # Create manager with camera IDs
+    async with MultiCameraManager(
+        camera_ids=["1234", "5678"],
+        wifi_ssid="YourWiFi",
+        wifi_password="YourPassword",
+        offline_mode=False,
+    ) as manager:
         # Connect all cameras
-        await manager.connect_all(cameras)
+        results = await manager.connect_all()
+        print(f"Connection results: {results}")
 
-        # Start recording on all cameras
-        await manager.execute_all("set_shutter", on=True)
+        # Execute on all cameras
+        await manager.execute_all(lambda c: c.start_recording())
 
-        # Wait a bit
         await asyncio.sleep(10)
 
-        # Stop all cameras
-        await manager.execute_all("set_shutter", on=False)
+        await manager.execute_all(lambda c: c.stop_recording())
 
-    finally:
-        await manager.disconnect_all()
-
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
+
+## Operating Mode Summary
+
+| Feature | Offline Mode | Online Mode |
+|---------|-------------|-------------|
+| Recording control | Yes | Yes |
+| Date/time sync | Yes | Yes |
+| Tag highlight | Yes | Yes |
+| Load preset | Yes | Yes |
+| Sleep | Yes | Yes |
+| Preview stream | No | Yes |
+| Media download | No | Yes |
+| Camera state query | No | Yes |
+| Webcam mode | No | Yes |
 
 ## Troubleshooting
 
@@ -272,23 +267,17 @@ asyncio.run(main())
 
 !!! bug "Connection Timeout"
     - Increase timeout values in TimeoutConfig
-    - Check WiFi signal strength for COHN
+    - Check WiFi signal strength for online mode
     - Restart the camera
     - Try reconnecting
 
 !!! failure "Import Errors"
-    - Make sure you've installed the package: `uv sync`
+    - Make sure you've installed the package: `pip install gopro-sdk-py`
     - Check that you're using Python 3.12 or higher
-    - Try reinstalling dependencies: `uv sync --reinstall`
+    - Try reinstalling: `pip install --force-reinstall gopro-sdk-py`
 
 ## Next Steps
 
 - Check out the [Examples](examples/basic.md) for more complex use cases
 - Read the [API Reference](api/overview.md) for detailed API documentation
-- See [Contributing](contributing.md) if you want to contribute
-
-## Getting Help
-
-- Open an issue on GitHub
-- Start a discussion
-- Check the documentation
+- See [Architecture](architecture.md) for design overview

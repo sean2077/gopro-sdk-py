@@ -249,6 +249,223 @@ class BleCommands:
             logger.error(f"❌ Time sync failed: {e}")
             raise BleConnectionError(f"Time sync failed: {e}") from e
 
+    async def tag_hilight(self) -> None:
+        """Tag highlight during recording via BLE.
+
+        Raises:
+            BleConnectionError: Command send failed or response error
+        """
+        logger.info("🏷️ Tagging highlight (BLE command)...")
+
+        # Clear response queue
+        self.ble.clear_response_queue()
+
+        # Build command: [cmd_id] (no parameters)
+        command_data = bytes([CmdId.TAG_HILIGHT])
+        logger.debug(f"📤 Sending tag hilight command: {command_data.hex()}")
+
+        try:
+            await self.ble.write(GoProBleUUID.CQ_COMMAND, command_data)
+
+            response_data = await self.ble.wait_for_response(timeout=2.0)
+
+            if len(response_data) < 2:
+                raise BleConnectionError(f"Response data too short: {len(response_data)} bytes")
+
+            cmd_id = response_data[0]
+            status_code = response_data[1]
+
+            if cmd_id != CmdId.TAG_HILIGHT:
+                raise BleConnectionError(
+                    f"Response command ID mismatch: expected {CmdId.TAG_HILIGHT:#x}, got {cmd_id:#x}"
+                )
+
+            if status_code != 0x00:
+                raise BleConnectionError(f"Tag hilight failed: status code {status_code:#x}")
+
+            logger.info("✅ Highlight tagged successfully")
+
+        except TimeoutError as e:
+            logger.error("❌ Tag hilight timeout")
+            raise BleConnectionError("Tag hilight timeout") from e
+        except Exception as e:
+            logger.error(f"❌ Tag hilight failed: {e}")
+            raise BleConnectionError(f"Tag hilight failed: {e}") from e
+
+    async def load_preset(self, preset_id: int) -> None:
+        """Load specified preset via BLE.
+
+        Args:
+            preset_id: Preset ID
+
+        Raises:
+            BleConnectionError: Command send failed or response error
+        """
+        logger.info(f"📋 Loading preset {preset_id} (BLE command)...")
+
+        # Clear response queue
+        self.ble.clear_response_queue()
+
+        # Build command: [cmd_id, param_len, preset_id (2 bytes big-endian)]
+        command_data = bytes([CmdId.LOAD_PRESET, 0x02]) + struct.pack(">H", preset_id)
+        logger.debug(f"📤 Sending load preset command: {command_data.hex()}")
+
+        try:
+            await self.ble.write(GoProBleUUID.CQ_COMMAND, command_data)
+
+            response_data = await self.ble.wait_for_response(timeout=2.0)
+
+            if len(response_data) < 2:
+                raise BleConnectionError(f"Response data too short: {len(response_data)} bytes")
+
+            cmd_id = response_data[0]
+            status_code = response_data[1]
+
+            if cmd_id != CmdId.LOAD_PRESET:
+                raise BleConnectionError(
+                    f"Response command ID mismatch: expected {CmdId.LOAD_PRESET:#x}, got {cmd_id:#x}"
+                )
+
+            if status_code != 0x00:
+                raise BleConnectionError(f"Load preset failed: status code {status_code:#x}")
+
+            logger.info(f"✅ Preset {preset_id} loaded successfully")
+
+        except TimeoutError as e:
+            logger.error(f"❌ Load preset {preset_id} timeout")
+            raise BleConnectionError(f"Load preset {preset_id} timeout") from e
+        except Exception as e:
+            logger.error(f"❌ Load preset {preset_id} failed: {e}")
+            raise BleConnectionError(f"Load preset {preset_id} failed: {e}") from e
+
+    async def load_preset_group(self, group_id: int) -> None:
+        """Load preset group via BLE.
+
+        Args:
+            group_id: Preset group ID
+
+        Raises:
+            BleConnectionError: Command send failed or response error
+        """
+        logger.info(f"📋 Loading preset group {group_id} (BLE command)...")
+
+        # Clear response queue
+        self.ble.clear_response_queue()
+
+        # Build command: [cmd_id, param_len, group_id (2 bytes big-endian)]
+        command_data = bytes([CmdId.LOAD_PRESET_GROUP, 0x02]) + struct.pack(">H", group_id)
+        logger.debug(f"📤 Sending load preset group command: {command_data.hex()}")
+
+        try:
+            await self.ble.write(GoProBleUUID.CQ_COMMAND, command_data)
+
+            response_data = await self.ble.wait_for_response(timeout=2.0)
+
+            if len(response_data) < 2:
+                raise BleConnectionError(f"Response data too short: {len(response_data)} bytes")
+
+            cmd_id = response_data[0]
+            status_code = response_data[1]
+
+            if cmd_id != CmdId.LOAD_PRESET_GROUP:
+                raise BleConnectionError(
+                    f"Response command ID mismatch: expected {CmdId.LOAD_PRESET_GROUP:#x}, got {cmd_id:#x}"
+                )
+
+            if status_code != 0x00:
+                raise BleConnectionError(f"Load preset group failed: status code {status_code:#x}")
+
+            logger.info(f"✅ Preset group {group_id} loaded successfully")
+
+        except TimeoutError as e:
+            logger.error(f"❌ Load preset group {group_id} timeout")
+            raise BleConnectionError(f"Load preset group {group_id} timeout") from e
+        except Exception as e:
+            logger.error(f"❌ Load preset group {group_id} failed: {e}")
+            raise BleConnectionError(f"Load preset group {group_id} failed: {e}") from e
+
+    async def sleep(self) -> None:
+        """Put camera to sleep via BLE.
+
+        Raises:
+            BleConnectionError: Command send failed or response error
+        """
+        logger.info("😴 Putting camera to sleep (BLE command)...")
+
+        # Clear response queue
+        self.ble.clear_response_queue()
+
+        # Build command: [cmd_id] (no parameters)
+        command_data = bytes([CmdId.SLEEP])
+        logger.debug(f"📤 Sending sleep command: {command_data.hex()}")
+
+        try:
+            await self.ble.write(GoProBleUUID.CQ_COMMAND, command_data)
+
+            response_data = await self.ble.wait_for_response(timeout=2.0)
+
+            if len(response_data) < 2:
+                raise BleConnectionError(f"Response data too short: {len(response_data)} bytes")
+
+            cmd_id = response_data[0]
+            status_code = response_data[1]
+
+            if cmd_id != CmdId.SLEEP:
+                raise BleConnectionError(f"Response command ID mismatch: expected {CmdId.SLEEP:#x}, got {cmd_id:#x}")
+
+            if status_code != 0x00:
+                raise BleConnectionError(f"Sleep command failed: status code {status_code:#x}")
+
+            logger.info("✅ Camera is going to sleep")
+
+        except TimeoutError as e:
+            logger.error("❌ Sleep command timeout")
+            raise BleConnectionError("Sleep command timeout") from e
+        except Exception as e:
+            logger.error(f"❌ Sleep command failed: {e}")
+            raise BleConnectionError(f"Sleep command failed: {e}") from e
+
+    async def reboot(self) -> None:
+        """Reboot camera via BLE.
+
+        Raises:
+            BleConnectionError: Command send failed or response error
+        """
+        logger.info("🔄 Rebooting camera (BLE command)...")
+
+        # Clear response queue
+        self.ble.clear_response_queue()
+
+        # Build command: [cmd_id] (no parameters)
+        command_data = bytes([CmdId.REBOOT])
+        logger.debug(f"📤 Sending reboot command: {command_data.hex()}")
+
+        try:
+            await self.ble.write(GoProBleUUID.CQ_COMMAND, command_data)
+
+            response_data = await self.ble.wait_for_response(timeout=2.0)
+
+            if len(response_data) < 2:
+                raise BleConnectionError(f"Response data too short: {len(response_data)} bytes")
+
+            cmd_id = response_data[0]
+            status_code = response_data[1]
+
+            if cmd_id != CmdId.REBOOT:
+                raise BleConnectionError(f"Response command ID mismatch: expected {CmdId.REBOOT:#x}, got {cmd_id:#x}")
+
+            if status_code != 0x00:
+                raise BleConnectionError(f"Reboot command failed: status code {status_code:#x}")
+
+            logger.info("✅ Camera is rebooting")
+
+        except TimeoutError as e:
+            logger.error("❌ Reboot command timeout")
+            raise BleConnectionError("Reboot command timeout") from e
+        except Exception as e:
+            logger.error(f"❌ Reboot command failed: {e}")
+            raise BleConnectionError(f"Reboot command failed: {e}") from e
+
     # ==================== Network Management Commands ====================
 
     async def release_network(self) -> None:

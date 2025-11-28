@@ -157,6 +157,20 @@ def get_setting_value(state: CameraState, setting_id: SettingId) -> Any | None:
     return state.get(setting_id)
 
 
+def _get_bool_status(state: CameraState, status_id: StatusId) -> bool:
+    """Helper function to get boolean status value with None handling.
+
+    Args:
+        state: Parsed state dictionary
+        status_id: Status ID to retrieve
+
+    Returns:
+        True if status value is truthy, False if falsy or None
+    """
+    value = get_status_value(state, status_id)
+    return bool(value) if value is not None else False
+
+
 def is_camera_busy(state: CameraState) -> bool:
     """Check if camera is busy.
 
@@ -170,8 +184,7 @@ def is_camera_busy(state: CameraState) -> bool:
         >>> if is_camera_busy(state):
         ...     print("Camera is busy, please wait...")
     """
-    busy = get_status_value(state, StatusId.BUSY)
-    return bool(busy) if busy is not None else False
+    return _get_bool_status(state, StatusId.BUSY)
 
 
 def is_camera_encoding(state: CameraState) -> bool:
@@ -187,8 +200,7 @@ def is_camera_encoding(state: CameraState) -> bool:
         >>> if is_camera_encoding(state):
         ...     print("🔴 Recording...")
     """
-    encoding = get_status_value(state, StatusId.ENCODING)
-    return bool(encoding) if encoding is not None else False
+    return _get_bool_status(state, StatusId.ENCODING)
 
 
 def is_preview_stream_active(state: CameraState) -> bool:
@@ -204,5 +216,4 @@ def is_preview_stream_active(state: CameraState) -> bool:
         >>> if is_preview_stream_active(state):
         ...     print("📹 Preview stream is active")
     """
-    preview = get_status_value(state, StatusId.PREVIEW_STREAM)
-    return bool(preview) if preview is not None else False
+    return _get_bool_status(state, StatusId.PREVIEW_STREAM)
