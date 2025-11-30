@@ -1,3 +1,9 @@
+## [1.0.1](https://github.com/sean2077/gopro-sdk-py/compare/1.0.0...1.0.1) (2025-11-30)
+
+### Fixes
+
+* format pyproject.toml and code ([ac77bce](https://github.com/sean2077/gopro-sdk-py/commit/ac77bcebb2ed08846bb150efac3447c142b5f2eb))
+
 ## 1.0.0 (2025-11-28)
 
 ### Fixes
