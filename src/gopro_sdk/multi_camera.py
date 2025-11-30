@@ -63,9 +63,7 @@ class MultiCameraManager:
         await manager.connect_all()
 
         # Execute commands concurrently
-        results = await manager.execute_all(
-            lambda client: client.start_recording()
-        )
+        results = await manager.execute_all(lambda client: client.start_recording())
 
         # Get all statuses
         statuses = await manager.get_all_status()
@@ -261,7 +259,7 @@ class MultiCameraManager:
                 return camera_id, False
 
         # Concurrently reconnect all cameras
-        tasks = [reconnect_one(camera_id) for camera_id in self._clients.keys()]
+        tasks = [reconnect_one(camera_id) for camera_id in self._clients]
         results = await asyncio.gather(*tasks)
 
         result_dict = dict(results)
@@ -290,15 +288,10 @@ class MultiCameraManager:
         Usage example:
         ```python
         # Start recording on all cameras
-        results = await manager.execute_all(
-            lambda client: client.start_recording()
-        )
+        results = await manager.execute_all(lambda client: client.start_recording())
 
         # Get status from specific cameras
-        results = await manager.execute_all(
-            lambda client: client.get_status(),
-            camera_ids=["9811", "9812"]
-        )
+        results = await manager.execute_all(lambda client: client.get_status(), camera_ids=["9811", "9812"])
         ```
         """
         target_ids = camera_ids if camera_ids is not None else list(self._clients.keys())
@@ -429,7 +422,7 @@ class MultiCameraManager:
                 return camera_id, False
 
         # Check concurrently
-        tasks = [check_one(camera_id) for camera_id in self._clients.keys()]
+        tasks = [check_one(camera_id) for camera_id in self._clients]
         results = await asyncio.gather(*tasks)
 
         result_dict = dict(results)

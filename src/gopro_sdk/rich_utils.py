@@ -14,10 +14,10 @@ from rich.progress import (
 from rich.table import Table
 
 __all__ = [
-    "console",
     "Console",
     "Progress",
     "Table",
+    "console",
     "create_progress",
     "create_table",
 ]

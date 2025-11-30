@@ -21,11 +21,7 @@ import open_gopro.models.proto.cohn_pb2 as cohn_proto
 import open_gopro.models.proto.network_management_pb2 as network_proto
 import open_gopro.models.proto.response_generic_pb2 as response_proto
 from open_gopro.models.constants import ActionId, CmdId, FeatureId
-from open_gopro.models.proto.network_management_pb2 import (
-    EnumProvisioning,
-    EnumScanEntryFlags,
-    EnumScanning,
-)
+from open_gopro.models.proto.network_management_pb2 import EnumProvisioning, EnumScanEntryFlags, EnumScanning
 from open_gopro.models.proto.response_generic_pb2 import RESULT_SUCCESS
 
 from ..ble_uuid import GoProBleUUID
@@ -614,14 +610,12 @@ class BleCommands:
             )
 
             # Validate credential completeness
-            if not all(
-                [
-                    credentials.ip_address,
-                    credentials.username,
-                    credentials.password,
-                    credentials.certificate,
-                ]
-            ):
+            if not all([
+                credentials.ip_address,
+                credentials.username,
+                credentials.password,
+                credentials.certificate,
+            ]):
                 raise CohnConfigurationError("Credentials incomplete")
 
             logger.info(f"✅ Camera {self.ble.target} COHN configuration successful: {credentials.ip_address}")
@@ -697,7 +691,7 @@ class BleCommands:
             if is_provisioned and (is_connected or (is_connecting and has_ip)):
                 if is_connecting:
                     logger.info(
-                        f"ℹ️ Camera state is {state_name}, but has IP ({status_response.ipaddress}), considered configured"
+                        f"📌 Camera state is {state_name}, but has IP ({status_response.ipaddress}), considered configured"
                     )
                 logger.info(f"✅ COHN configuration complete! IP: {status_response.ipaddress}")
                 return
@@ -777,14 +771,12 @@ class BleCommands:
         # Parse results
         networks = []
         for entry in response.entries:
-            networks.append(
-                {
-                    "ssid": entry.ssid,
-                    "signal_strength": entry.signal_strength_bars,
-                    "signal_frequency": entry.signal_frequency_mhz,
-                    "configured": bool(entry.scan_entry_flags & EnumScanEntryFlags.SCAN_FLAG_CONFIGURED),
-                }
-            )
+            networks.append({
+                "ssid": entry.ssid,
+                "signal_strength": entry.signal_strength_bars,
+                "signal_frequency": entry.signal_frequency_mhz,
+                "configured": bool(entry.scan_entry_flags & EnumScanEntryFlags.SCAN_FLAG_CONFIGURED),
+            })
 
         logger.info(f"✅ Scan complete, found {len(networks)} networks")
         return networks

@@ -1,12 +1,12 @@
 """Custom exception classes."""
 
 __all__ = [
-    "CustomGoProError",
     "BleConnectionError",
     "BleTimeoutError",
-    "HttpConnectionError",
-    "CohnNotConfiguredError",
     "CohnConfigurationError",
+    "CohnNotConfiguredError",
+    "CustomGoProError",
+    "HttpConnectionError",
 ]
 
 

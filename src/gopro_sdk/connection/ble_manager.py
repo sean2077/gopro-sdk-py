@@ -10,6 +10,7 @@ from __future__ import annotations
 __all__ = ["BleConnectionManager"]
 
 import asyncio
+import contextlib
 import logging
 import re
 import traceback
@@ -112,15 +113,13 @@ class BleConnectionManager:
 
                     # Cleanup before retry: ensure no leftover client
                     if retry > 0 and self._ble_client is not None:
-                        try:
+                        with contextlib.suppress(Exception):
                             logger.debug("Cleaning up failed connection...")
                             if self._ble_client.is_connected:
                                 await self._ble_client.disconnect()
                             self._ble_client = None
                             # Give Windows more time to clean up
                             await asyncio.sleep(2.0)
-                        except Exception:
-                            pass
 
                     # 1. Scan devices (based on Tutorial)
                     devices: dict[str, BleakDevice] = {}
@@ -167,14 +166,12 @@ class BleConnectionManager:
 
                     # Windows-specific: destroy previous client instance if exists
                     if self._ble_client is not None:
-                        try:
+                        with contextlib.suppress(Exception):
                             if self._ble_client.is_connected:
                                 logger.debug("Destroying old BLE client...")
                                 await self._ble_client.disconnect()
                             self._ble_client = None
                             await asyncio.sleep(1.0)
-                        except Exception:
-                            pass
 
                     # Create new BLE client (with longer timeout)
                     # Pass disconnection callback directly in constructor
@@ -247,12 +244,10 @@ class BleConnectionManager:
                     logger.debug(f"Detailed error information:\n{traceback.format_exc()}")
 
                     # Clean up failed connection
-                    try:
+                    with contextlib.suppress(Exception):
                         if self._ble_client and self._ble_client.is_connected:
                             await self._ble_client.disconnect()
                         self._ble_client = None
-                    except Exception:
-                        pass
 
                     # Provide brief hints for common errors
                     if "Unreachable" in error_msg:

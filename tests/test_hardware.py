@@ -36,7 +36,7 @@ async def test_ble_scan():
             logger.info(f"📱 Found camera: {serial}")
     logger.info("🔍 Scan complete")
     if not serials:
-        logger.info("ℹ️ No GoPro cameras found")
+        logger.info("📌 No GoPro cameras found")
 
     # Validate return type
     assert isinstance(serials, list), "Should return a list"

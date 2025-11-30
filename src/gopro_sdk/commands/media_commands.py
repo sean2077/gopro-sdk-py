@@ -140,10 +140,7 @@ class MediaCommands:
             HttpConnectionError: Download failed
         """
         # Extract file path
-        if isinstance(media_file, MediaFile):
-            file_path = media_file.filename
-        else:
-            file_path = media_file
+        file_path = media_file.filename if isinstance(media_file, MediaFile) else media_file
 
         logger.info(f"⬇️ Downloading file {file_path} to {save_path}...")
 

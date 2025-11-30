@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-__all__ = ["CohnCredentials", "TimeoutConfig", "CohnConfigManager"]
+__all__ = ["CohnConfigManager", "CohnCredentials", "TimeoutConfig"]
 
+import contextlib
 import logging
 from dataclasses import dataclass
 from pathlib import Path
@@ -136,12 +137,9 @@ class CohnConfigManager:
 
     def __del__(self) -> None:
         """Cleanup: ensure database is closed when object is destroyed."""
-        try:
+        with contextlib.suppress(Exception):
             if hasattr(self, "_db") and self._db is not None:
                 self._db.close()
-        except Exception:
-            # Silently ignore errors during cleanup
-            pass
 
     def save(self, serial: str, credentials: CohnCredentials) -> None:
         """Save or update camera COHN credentials.
@@ -178,14 +176,12 @@ class CohnConfigManager:
             return None
 
         data = result[0]
-        credentials = CohnCredentials.from_dict(
-            {
-                "ip_address": data["ip_address"],
-                "username": data["username"],
-                "password": data["password"],
-                "certificate": data["certificate"],
-            }
-        )
+        credentials = CohnCredentials.from_dict({
+            "ip_address": data["ip_address"],
+            "username": data["username"],
+            "password": data["password"],
+            "certificate": data["certificate"],
+        })
         logger.debug(f"Loaded COHN credentials for camera {serial}: {credentials.ip_address}")
         return credentials
 
@@ -218,14 +214,12 @@ class CohnConfigManager:
 
         for record in all_records:
             serial = record["serial"]
-            credentials = CohnCredentials.from_dict(
-                {
-                    "ip_address": record["ip_address"],
-                    "username": record["username"],
-                    "password": record["password"],
-                    "certificate": record["certificate"],
-                }
-            )
+            credentials = CohnCredentials.from_dict({
+                "ip_address": record["ip_address"],
+                "username": record["username"],
+                "password": record["password"],
+                "certificate": record["certificate"],
+            })
             result[serial] = credentials
 
         logger.debug(f"Listed all COHN credentials, total: {len(result)}")

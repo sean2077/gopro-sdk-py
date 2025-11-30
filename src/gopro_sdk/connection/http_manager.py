@@ -11,6 +11,7 @@ import asyncio
 import logging
 import ssl
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 import aiohttp
@@ -161,13 +162,15 @@ class HttpConnectionManager:
 
         try:
             # Use temporary session with short timeout
-            async with aiohttp.ClientSession() as temp_session:
-                async with temp_session.get(
+            async with (
+                aiohttp.ClientSession() as temp_session,
+                temp_session.get(
                     f"https://{self._credentials.ip_address}/gopro/version",
                     timeout=aiohttp.ClientTimeout(total=self._timeout.http_initial_check_timeout),
                     ssl=self._ssl_context if self._ssl_context else False,
-                ) as resp:
-                    return resp.status == 200
+                ) as resp,
+            ):
+                return resp.status == 200
         except Exception:
             return False
 
@@ -272,12 +275,8 @@ class HttpConnectionManager:
                                 ) from e
 
                         # Use progressive backoff strategy (quick retries first, gradually increase interval)
-                        if attempt <= 3:
-                            # First 3 quick retries (1.5, 1.5, 1.5 seconds)
-                            wait_time = retry_interval
-                        else:
-                            # Then use exponential backoff
-                            wait_time = retry_interval * (attempt - 2)
+                        # First 3 quick retries (1.5s), then exponential backoff
+                        wait_time = retry_interval if attempt <= 3 else retry_interval * (attempt - 2)
 
                         logger.debug(
                             f"HTTPS not ready ({error_type}: {e or '(no details)'}), retrying after {wait_time:.1f}s..."
@@ -402,7 +401,7 @@ class HttpConnectionManager:
                 # Get total file size
                 total_size = int(resp.headers.get("Content-Length", 0))
 
-                with open(destination, "wb") as f:
+                with Path(destination).open("wb") as f:
                     async for chunk in resp.content.iter_chunked(chunk_size):
                         f.write(chunk)
                         downloaded += len(chunk)

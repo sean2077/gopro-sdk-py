@@ -12,6 +12,7 @@ from __future__ import annotations
 __all__ = ["GoProClient", "OfflineModeError"]
 
 import asyncio
+import contextlib
 import functools
 import logging
 from collections.abc import Callable
@@ -92,22 +93,21 @@ class GoProClient(HealthCheckMixin):
         Method 1 - Offline mode (default, BLE only, recommended for no WiFi or slow WiFi):
         >>> async with GoProClient("1332") as client:  # offline_mode=True (default)
         ...     await client.start_recording()  # ✅ Control via BLE
-        ...     await client.set_date_time()    # ✅ Sync time via BLE
+        ...     await client.set_date_time()  # ✅ Sync time via BLE
         ...     # await client.start_preview()  # ❌ Not supported in offline mode
 
         Method 2 - Online mode (BLE+WiFi, supports preview, download, etc.):
-        >>> async with GoProClient("1332", offline_mode=False,
-        ...                        wifi_ssid="MyWiFi", wifi_password="pass") as client:
-        ...     await client.start_recording()   # ✅ Control via BLE
-        ...     await client.start_preview()     # ✅ Preview via HTTP
-        ...     await client.download_media(...) # ✅ Download via HTTP
+        >>> async with GoProClient("1332", offline_mode=False, wifi_ssid="MyWiFi", wifi_password="pass") as client:
+        ...     await client.start_recording()  # ✅ Control via BLE
+        ...     await client.start_preview()  # ✅ Preview via HTTP
+        ...     await client.download_media(...)  # ✅ Download via HTTP
 
         Method 3 - Dynamic mode switching:
         >>> async with GoProClient("1332") as client:  # Start in offline mode
         ...     await client.start_recording()  # Via BLE
         ...     # Switch to online mode when preview needed
         ...     await client.switch_to_online_mode(wifi_ssid="MyWiFi", wifi_password="pass")
-        ...     await client.start_preview()    # Preview now available
+        ...     await client.start_preview()  # Preview now available
 
         Method 4 - Camera already connected to WiFi (online mode, simplest):
         >>> async with GoProClient("1332", offline_mode=False) as client:
@@ -228,8 +228,7 @@ class GoProClient(HealthCheckMixin):
             ...     await client.start_recording()  # Works via BLE only
 
             Online mode:
-            >>> async with GoProClient("1332", offline_mode=False,
-            ...                        wifi_ssid="MyWiFi", wifi_password="pass") as client:
+            >>> async with GoProClient("1332", offline_mode=False, wifi_ssid="MyWiFi", wifi_password="pass") as client:
             ...     await client.start_preview()  # Works via HTTP
         """
         mode_str = "Offline mode (BLE only)" if self._offline_mode else "Online mode (BLE+WiFi)"
@@ -545,15 +544,11 @@ class GoProClient(HealthCheckMixin):
         """
         # Attempt to stop any existing preview/recording directly
         # Failures are expected and ignored - camera handles state internally
-        try:
+        with contextlib.suppress(Exception):
             await self.set_preview_stream(False)
-        except Exception:
-            pass  # Already stopped or not applicable
 
-        try:
+        with contextlib.suppress(Exception):
             await self.set_shutter(False)
-        except Exception:
-            pass  # Not recording or already stopped
 
         # Brief pause to let camera update state
         await asyncio.sleep(self._timeout.preview_state_settle_delay)
@@ -1029,14 +1024,12 @@ class GoProClient(HealthCheckMixin):
         )
 
         # Validate credentials completeness
-        if not all(
-            [
-                credentials.ip_address,
-                credentials.username,
-                credentials.password,
-                credentials.certificate,
-            ]
-        ):
+        if not all([
+            credentials.ip_address,
+            credentials.username,
+            credentials.password,
+            credentials.certificate,
+        ]):
             raise BleConnectionError(
                 f"Credentials incomplete: "
                 f"ip={bool(credentials.ip_address)}, "
@@ -1136,7 +1129,7 @@ class GoProClient(HealthCheckMixin):
                 f"2. ❌ WiFi password incorrect\n"
                 f"3. ❌ Router signal too weak\n"
                 f"4. ❌ Camera too far from router\n"
-                f"5. ℹ️ Camera may have connected but BLE disconnected (COHN mode)\n"
+                f"5. 📌 Camera may have connected but BLE disconnected (COHN mode)\n"
                 f"\n"
                 f"Suggestions:\n"
                 f"- Check WiFi configuration is correct\n"

@@ -6,13 +6,13 @@ Based on the Open GoPro SDK parsing logic, converts raw state data into readable
 from __future__ import annotations
 
 __all__ = [
-    "parse_camera_state",
     "format_camera_state",
-    "get_status_value",
     "get_setting_value",
+    "get_status_value",
     "is_camera_busy",
     "is_camera_encoding",
     "is_preview_stream_active",
+    "parse_camera_state",
 ]
 
 import logging
@@ -78,7 +78,7 @@ def parse_camera_state(raw_state: dict[str, Any]) -> CameraState:
                     parsed[identifier] = parser_builder(v)
 
             except (ValueError, FormatFieldError) as e:
-                logger.debug(f"⚠️ Unable to parse {name}::{k}, value: {v} ==> {repr(e)}")
+                logger.debug(f"⚠️ Unable to parse {name}::{k}, value: {v} ==> {e!r}")
                 continue
 
     return parsed

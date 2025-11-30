@@ -150,19 +150,15 @@ class HealthCheckMixin:
         }
 
         if hasattr(self, "ble"):
-            stats.update(
-                {
-                    "ble_connected": self.ble.is_connected,
-                    "ble_disconnect_count": self.ble._disconnect_count,
-                }
-            )
+            stats.update({
+                "ble_connected": self.ble.is_connected,
+                "ble_disconnect_count": self.ble._disconnect_count,
+            })
 
         if hasattr(self, "http"):
-            stats.update(
-                {
-                    "http_connected": self.http.is_connected,
-                    "http_error_count": self.http._error_count,
-                }
-            )
+            stats.update({
+                "http_connected": self.http.is_connected,
+                "http_error_count": self.http._error_count,
+            })
 
         return stats
