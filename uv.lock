@@ -553,7 +553,7 @@ wheels = [
 
 [[package]]
 name = "gopro-sdk-py"
-version = "1.0.1"
+version = "1.0.2"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },

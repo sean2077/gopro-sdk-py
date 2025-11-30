@@ -1,3 +1,9 @@
+## [1.0.2](https://github.com/sean2077/gopro-sdk-py/compare/1.0.1...1.0.2) (2025-11-30)
+
+### Fixes
+
+* improve WiFi connection handling and type annotations ([f571d47](https://github.com/sean2077/gopro-sdk-py/commit/f571d47b1a72e4f16abb1528a84a0e62c927963f))
+
 ## [1.0.1](https://github.com/sean2077/gopro-sdk-py/compare/1.0.0...1.0.1) (2025-11-30)
 
 ### Fixes
