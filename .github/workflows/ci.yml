@@ -25,18 +25,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          version: "latest"
-
-      - name: Install dependencies
-        run: uv sync --extra dev
+      - name: Setup Python environment
+        uses: ./.github/actions/setup-python-env
 
       - name: Run ruff format check
         run: uv run ruff format --check .
@@ -54,26 +44,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
+      - name: Setup Python environment
+        uses: ./.github/actions/setup-python-env
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          version: "latest"
-
-      - name: Install dependencies
-        run: uv sync --extra dev
-
       - name: Run tests
-        run: uv run pytest -v -m "not hardware" --cov=src/gopro_sdk --cov-report=xml
-
-      - name: Upload coverage
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
-        uses: codecov/codecov-action@v5
-        with:
-          file: ./coverage.xml
-          flags: unittests
-          token: ${{ secrets.CODECOV_TOKEN }}
+        run: uv run pytest -v -m "not hardware"

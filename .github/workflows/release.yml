@@ -30,10 +30,8 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
+      - name: Setup Python environment
+        uses: ./.github/actions/setup-python-env
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -48,11 +46,6 @@ jobs:
           npm install -g @semantic-release/git@latest
           npm install -g @semantic-release/github@latest
           npm install -g conventional-changelog-conventionalcommits@latest
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          version: "latest"
 
       - name: Release
         env:

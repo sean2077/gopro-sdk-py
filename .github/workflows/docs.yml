@@ -24,22 +24,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout code
+        uses: actions/checkout@v6
         with:
-          fetch-depth: 0 # Fetch all history for git info
+          fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          version: "latest"
-
-      - name: Install dependencies
-        run: uv sync --extra docs
+      - name: Setup Python environment
+        uses: ./.github/actions/setup-python-env
 
       - name: Build documentation
         run: uv run mkdocs build --strict
@@ -55,9 +46,8 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
-    # Temporarily allow deployment from dev branch for testing
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4.0.5
+        uses: actions/deploy-pages@v4

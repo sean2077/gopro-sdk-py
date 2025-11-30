@@ -1,5 +1,11 @@
 # GoPro SDK for Python
 
+[![CI](https://github.com/sean2077/gopro-sdk-py/actions/workflows/ci.yml/badge.svg)](https://github.com/sean2077/gopro-sdk-py/actions/workflows/ci.yml)
+[![Documentation](https://github.com/sean2077/gopro-sdk-py/actions/workflows/docs.yml/badge.svg)](https://sean2077.github.io/gopro-sdk-py/)
+[![PyPI version](https://img.shields.io/pypi/v/gopro-sdk-py.svg)](https://pypi.org/project/gopro-sdk-py/)
+[![Python versions](https://img.shields.io/pypi/pyversions/gopro-sdk-py.svg)](https://pypi.org/project/gopro-sdk-py/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A production-ready Python SDK for controlling GoPro cameras, specifically designed and optimized for multi-camera COHN (Camera on Home Network) scenarios.
 
 ## Features
