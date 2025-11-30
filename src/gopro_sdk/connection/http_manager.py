@@ -207,6 +207,7 @@ class HttpConnectionManager:
                     f"Testing HTTPS connection (attempt {attempt}/{max_retries}): {self.base_url}/gopro/version"
                 )
                 # Give camera more time to respond
+                assert self._session is not None  # Type guard: session must exist here
                 async with self._session.get(
                     f"{self.base_url}/gopro/version",
                     timeout=aiohttp.ClientTimeout(total=self._timeout.http_keep_alive_timeout),

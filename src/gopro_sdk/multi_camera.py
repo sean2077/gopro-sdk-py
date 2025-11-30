@@ -91,7 +91,7 @@ class MultiCameraManager:
             wifi_password: WiFi password (used with wifi_ssid)
             offline_mode: Offline mode (default True), BLE connection only, no preview/download support
         """
-        self.camera_ids = camera_ids if camera_ids is not None else []
+        self.camera_ids: list[str] = camera_ids if camera_ids is not None else []
         self._timeout_config = timeout_config or TimeoutConfig()
         self._config_manager = config_manager or CohnConfigManager()
         self._max_concurrent = max_concurrent
@@ -103,7 +103,7 @@ class MultiCameraManager:
         self._clients: dict[str, GoProClient] = {}
 
         # Camera status dictionary
-        self._statuses: dict[str, CameraStatus] = {camera_id: CameraStatus(camera_id) for camera_id in camera_ids}
+        self._statuses: dict[str, CameraStatus] = {camera_id: CameraStatus(camera_id) for camera_id in self.camera_ids}
 
         # Concurrency control semaphore (lazy init to avoid creating before event loop is set)
         self._semaphore: asyncio.Semaphore | None = None
@@ -113,7 +113,7 @@ class MultiCameraManager:
         self._global_lock: asyncio.Lock | None = None
 
         logger.info(
-            f"Initialized MultiCameraManager, managing {len(camera_ids)} cameras, max concurrency: {max_concurrent}"
+            f"Initialized MultiCameraManager, managing {len(self.camera_ids)} cameras, max concurrency: {max_concurrent}"
         )
 
     @property
@@ -172,7 +172,7 @@ class MultiCameraManager:
                     self._clients[camera_id] = client
 
                     # Unified connection (BLE or BLE + HTTP, depends on mode)
-                    await client.connect()
+                    await client.open(wifi_ssid=self._wifi_ssid, wifi_password=self._wifi_password)
 
                     # Update status
                     self._statuses[camera_id].is_connected = True
@@ -542,7 +542,7 @@ class MultiCameraManager:
                 )
                 self._clients[camera_id] = client
 
-                await client.connect()
+                await client.open(wifi_ssid=self._wifi_ssid, wifi_password=self._wifi_password)
 
                 self._statuses[camera_id].is_connected = True
                 self._statuses[camera_id].last_error = None

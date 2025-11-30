@@ -56,7 +56,7 @@ class BleScanner:
         logger.info(f"Starting BLE scan (max {duration}s, idle timeout {idle_timeout}s)")
 
         try:
-            async with BleakScanner(
+            async with BleakScanner(  # type: ignore[invalid-context-manager]
                 service_uuids=[GoProBleUUID.S_CONTROL_QUERY]  # GoPro service UUID
             ) as scanner:
                 while time.monotonic() < end_time:

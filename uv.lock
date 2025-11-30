@@ -558,10 +558,10 @@ source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
     { name = "bleak" },
+    { name = "construct" },
     { name = "open-gopro" },
-    { name = "protobuf" },
-    { name = "requests" },
     { name = "rich" },
+    { name = "tinydb" },
 ]
 
 [package.dev-dependencies]
@@ -587,10 +587,10 @@ docs = [
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.13" },
     { name = "bleak", specifier = ">=0.22" },
+    { name = "construct", specifier = ">=2.10" },
     { name = "open-gopro", specifier = ">=0.22" },
-    { name = "protobuf", specifier = ">=6.33" },
-    { name = "requests", specifier = ">=2.32" },
     { name = "rich", specifier = ">=14.0" },
+    { name = "tinydb", specifier = ">=4.8" },
 ]
 
 [package.metadata.requires-dev]

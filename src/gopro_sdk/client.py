@@ -316,9 +316,9 @@ class GoProClient(HealthCheckMixin):
             BleConnectionError: WiFi connection or COHN setup failed
         """
         # Step 1: If WiFi credentials provided, connect to WiFi
-        if wifi_ssid is not None:
+        if wifi_ssid is not None and wifi_password is not None:
             credentials = self._config_manager.load(self.target)
-            has_cohn_credentials = (
+            has_cohn_credentials = bool(
                 credentials is not None and credentials.certificate and credentials.username and credentials.password
             )
             logger.debug(f"[camera {self.target}] COHN credentials check: has_credentials={has_cohn_credentials}")
@@ -367,6 +367,7 @@ class GoProClient(HealthCheckMixin):
             # Already have credentials (certificate), refresh IP address
             # WiFi network may have changed, IP will change, but certificate remains valid
             logger.info("COHN already configured, refreshing network info...")
+            assert credentials is not None  # Type guard: credentials must exist here
             credentials = await self._refresh_cohn_ip_address(credentials)
 
         # Step 3: Initialize HTTP credentials (lazy connection, auto-connect on first request)
@@ -1162,5 +1163,15 @@ class GoProClient(HealthCheckMixin):
             ssid: WiFi SSID
             password: WiFi password (can be None if already configured)
             timeout: Connection timeout (seconds), defaults to configured value
+
+        Note:
+            If password is None, assumes network is already configured on camera
+            and will use RequestConnect (no password required).
         """
-        await self.ble_commands.connect_to_wifi(ssid, password, timeout)
+        if password is not None:
+            await self.ble_commands.connect_to_wifi(ssid, password, timeout)
+        else:
+            # No password provided, try to connect to configured network
+            await self.ble_commands._connect_to_configured_wifi(
+                ssid, timeout or self._timeout.wifi_connect_configured_timeout
+            )

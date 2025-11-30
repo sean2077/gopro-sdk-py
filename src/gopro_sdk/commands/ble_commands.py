@@ -1102,7 +1102,7 @@ class BleCommands:
         await self._connect_to_new_wifi(ssid, password, timeout)
         logger.info(f"✅ [camera {self.ble.target}] RequestConnectNew successful! Camera connected to '{ssid}'")
 
-    async def _connect_to_configured_wifi(self, ssid: str, timeout: int) -> None:
+    async def _connect_to_configured_wifi(self, ssid: str, timeout: float) -> None:
         """Connect to configured WiFi network (using RequestConnect).
 
         Args:
@@ -1173,7 +1173,7 @@ class BleCommands:
                 f"Note: In COHN mode camera will disconnect BLE, this is normal behavior"
             )
 
-    async def _connect_to_new_wifi(self, ssid: str, password: str, timeout: int) -> None:
+    async def _connect_to_new_wifi(self, ssid: str, password: str, timeout: float) -> None:
         """Connect to new WiFi network (using RequestConnectNew).
 
         Args:

@@ -50,10 +50,11 @@ classifiers = [
 dependencies = [
   "open-gopro>=0.22",
   "bleak>=0.22",
-  "requests>=2.32",
-  "protobuf>=6.33",
   "aiohttp>=3.13",
   "rich>=14.0",
+  # Transitive dependencies that we import directly
+  "construct>=2.10",
+  "tinydb>=4.8",
 ]
 
 # ----------------------------------------------------------------------------
@@ -173,7 +174,7 @@ docstring-code-format = true
 # https://github.com/astral-sh/ty
 # ----------------------------------------------------------------------------
 [tool.ty]
-include = ["src"]
+# No special configuration needed, ty auto-detects src layout
 
 # ----------------------------------------------------------------------------
 # pytest - Testing Framework

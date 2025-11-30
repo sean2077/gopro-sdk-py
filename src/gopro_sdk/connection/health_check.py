@@ -18,6 +18,7 @@ __all__ = ["HealthCheckMixin"]
 import asyncio
 import logging
 import time
+from typing import Any
 
 from .ble_manager import BleConnectionManager
 from .http_manager import HttpConnectionManager
@@ -137,7 +138,7 @@ class HealthCheckMixin:
         self._max_reconnect_attempts = attempts
         logger.info(f"Maximum reconnect attempts set to {attempts} (camera {self.target})")
 
-    def get_health_stats(self) -> dict[str, any]:
+    def get_health_stats(self) -> dict[str, Any]:
         """Get health statistics.
 
         Returns:
