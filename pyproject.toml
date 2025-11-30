@@ -173,8 +173,9 @@ docstring-code-format = true
 # ty - Type Checker (Astral)
 # https://github.com/astral-sh/ty
 # ----------------------------------------------------------------------------
-[tool.ty]
-# No special configuration needed, ty auto-detects src layout
+[tool.ty.src]
+# Only check src directory, exclude vendor
+include = ["src"]
 
 # ----------------------------------------------------------------------------
 # pytest - Testing Framework
