@@ -1,3 +1,9 @@
+## [1.0.3](https://github.com/sean2077/gopro-sdk-py/compare/1.0.2...1.0.3) (2025-12-03)
+
+### Fixes
+
+* add proto module for convenient access to GoPro protobuf models ([88ef859](https://github.com/sean2077/gopro-sdk-py/commit/88ef8596db14e511662027109734cc45d36d97b2))
+
 ## [1.0.2](https://github.com/sean2077/gopro-sdk-py/compare/1.0.1...1.0.2) (2025-11-30)
 
 ### Fixes
