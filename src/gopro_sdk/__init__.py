@@ -20,6 +20,7 @@ from importlib.metadata import version
 
 __version__ = version("gopro-sdk-py")
 
+from . import proto
 from .client import GoProClient
 from .config import CohnConfigManager, CohnCredentials
 from .connection.ble_scanner import BleScanner
@@ -44,5 +45,6 @@ __all__ = [
     "get_logger",
     "get_status_value",
     "is_camera_encoding",
+    "proto",
     "setup_logging",
 ]
