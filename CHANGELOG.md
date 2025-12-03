@@ -1,3 +1,9 @@
+## [1.0.4](https://github.com/sean2077/gopro-sdk-py/compare/1.0.3...1.0.4) (2025-12-03)
+
+### Fixes
+
+* re-export GoPro protobuf models for convenient access ([8af9137](https://github.com/sean2077/gopro-sdk-py/commit/8af9137c3fb3a19d70171b5ceae7fca2cc3beba2))
+
 ## [1.0.3](https://github.com/sean2077/gopro-sdk-py/compare/1.0.2...1.0.3) (2025-12-03)
 
 ### Fixes
