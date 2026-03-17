@@ -73,6 +73,6 @@ from gopro_sdk import (
     MultiCameraManager,
     CohnConfigManager,
     CohnCredentials,
-    TimeoutConfig,
 )
+from gopro_sdk.config import TimeoutConfig
 ```

@@ -349,8 +349,9 @@ async with MultiCameraManager(["1332", "1333", "1334"]) as manager:
     # Execute on all cameras
     results = await manager.execute_all(lambda c: c.start_recording())
 
-    # Get all statuses
-    statuses = manager.get_camera_status()
+    # Get overall manager status
+    status = manager.get_manager_status()
+    print(f"Connected: {status['connected_cameras']}/{status['total_cameras']}")
 ```
 
 ## Data Flow Examples

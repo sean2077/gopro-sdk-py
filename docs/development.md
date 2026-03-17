@@ -6,7 +6,9 @@ This project uses modern Python tooling:
 
 - **Package Manager**: [uv](https://docs.astral.sh/uv/) - Fast Python package installer and resolver
 - **Formatter & Linter**: [ruff](https://docs.astral.sh/ruff/) - Fast Python linter and formatter
+- **Type Checker**: [ty](https://github.com/astral-sh/ty) - Type checker from Astral
 - **Task Runner**: [poethepoet](https://github.com/nat-n/poethepoet) - Task runner for Python projects
+- **Documentation**: [MkDocs Material](https://squidfunk.github.io/mkdocs-material/) - Documentation site generator
 
 ## Getting Started
 
@@ -25,8 +27,8 @@ This project uses modern Python tooling:
     git clone https://github.com/sean2077/gopro-sdk-py.git
     cd gopro-sdk-py
 
-    # Install dependencies
-    uv sync --extra dev
+    # Install all dependencies (dev + docs groups)
+    uv sync --all-groups
 
     # Install pre-commit hooks (optional)
     pre-commit install
@@ -46,8 +48,8 @@ This project uses modern Python tooling:
     python -m venv .venv
     source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-    # Install dependencies
-    pip install -e ".[dev]"
+    # Install the package in editable mode
+    pip install -e .
 
     # Install pre-commit hooks (optional)
     pre-commit install
@@ -93,27 +95,34 @@ For commit message conventions, see the [Contributing Guide](contributing.md#com
 ```
 gopro-sdk-py/
 ├── src/
-│   └── gopro_sdk/          # Main package
-│       ├── __init__.py     # Package exports
-│       ├── client.py       # GoProClient
-│       ├── config.py       # Configuration
-│       ├── exceptions.py   # Custom exceptions
-│       ├── state_parser.py # State parsing
-│       ├── commands/       # Command implementations
+│   └── gopro_sdk/              # Main package
+│       ├── __init__.py         # Package exports
+│       ├── client.py           # GoProClient
+│       ├── config.py           # Configuration (TimeoutConfig, CohnConfigManager)
+│       ├── exceptions.py       # Custom exceptions
+│       ├── multi_camera.py     # MultiCameraManager
+│       ├── state_parser.py     # State parsing utilities
+│       ├── ble_uuid.py         # BLE UUID constants
+│       ├── logging_config.py   # Logging setup
+│       ├── rich_utils.py       # Rich console utilities
+│       ├── commands/           # Command implementations
 │       │   ├── ble_commands.py
 │       │   ├── http_commands.py
 │       │   ├── media_commands.py
 │       │   └── webcam_commands.py
-│       └── connection/     # Connection managers
-│           ├── ble_manager.py
-│           ├── http_manager.py
-│           └── health_check.py
-├── tests/                  # Test suite
+│       ├── connection/         # Connection managers
+│       │   ├── ble_manager.py
+│       │   ├── http_manager.py
+│       │   ├── ble_scanner.py
+│       │   └── health_check.py
+│       └── proto/              # GoPro protobuf definitions
+│           └── *.py
+├── tests/                      # Test suite
 │   └── test_*.py
-├── examples/               # Usage examples
-├── docs/                   # Documentation
-├── pyproject.toml          # Project configuration
-└── .github/workflows/      # CI/CD workflows
+├── examples/                   # Usage examples
+├── docs/                       # Documentation (MkDocs)
+├── pyproject.toml              # Project configuration
+└── .github/workflows/          # CI/CD workflows
 ```
 
 ## Testing
@@ -429,11 +438,12 @@ pre-commit autoupdate
 
 ### Type Errors
 
-Type checking is handled by Pyright (via VS Code Python extension) or ruff's type checker.
+Type checking is handled by [ty](https://github.com/astral-sh/ty) (Astral's type checker).
 
 ```bash
-# Run ruff with type checking
-ruff check src/gopro_sdk
+# Run type checker
+poe type-check
+# or: ty check
 ```
 
 ### COHN Configuration Timeout

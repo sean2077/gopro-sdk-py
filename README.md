@@ -31,11 +31,10 @@ import asyncio
 from gopro_sdk import GoProClient
 
 async def main():
-    client = GoProClient(identifier="GoPro 1234")
-    await client.open_ble()
-    await client.configure_cohn(ssid="your-wifi", password="password")
-    await client.set_shutter(on=True)
-    await client.close()
+    async with GoProClient("1234") as client:
+        await client.start_recording()
+        await asyncio.sleep(5)
+        await client.stop_recording()
 
 asyncio.run(main())
 ```

@@ -26,80 +26,81 @@
 ### Custom Timeouts
 
 ```python
-from gopro_sdk import GoProClient, TimeoutConfig
+from gopro_sdk import GoProClient
+from gopro_sdk.config import TimeoutConfig
 
 # Create custom timeout configuration
 timeouts = TimeoutConfig(
-    ble_connect=20.0,      # 20 seconds for BLE connection
-    ble_disconnect=10.0,   # 10 seconds for disconnection
-    http_request=15.0,     # 15 seconds for HTTP requests
-    command_response=10.0, # 10 seconds for command responses
-    cohn_ready=60.0        # 60 seconds to wait for COHN
+    ble_connect_timeout=30.0,         # 30 seconds for BLE connection
+    ble_response_timeout=10.0,        # 10 seconds for BLE response
+    http_request_timeout=60.0,        # 60 seconds for HTTP requests
+    wifi_provision_timeout=120.0,     # 120 seconds for WiFi setup
+    cohn_provision_timeout=90.0,      # 90 seconds for COHN setup
 )
 
-client = GoProClient(identifier="1234", timeout_config=timeouts)
+async with GoProClient("1234", timeout_config=timeouts) as client:
+    await client.start_recording()
 ```
 
 ### Persistent COHN Configuration
 
+The SDK automatically manages COHN credential persistence via `CohnConfigManager`.
+When using online mode, credentials are saved on first connection and reused on subsequent connections.
+
 ```python
 from gopro_sdk import GoProClient, CohnConfigManager
 
-async def use_saved_config():
-    """Use saved COHN configuration."""
-    client = GoProClient(identifier="1234")
-    config_mgr = CohnConfigManager()
+async def use_persistent_config():
+    """COHN credentials are automatically persisted."""
+    # First connection: credentials are fetched and saved
+    async with GoProClient(
+        "1234",
+        offline_mode=False,
+        wifi_ssid="your-wifi",
+        wifi_password="password",
+    ) as client:
+        status = await client.get_camera_state()
+        print(f"Camera state: {status}")
 
-    # Try to load saved config
-    saved_config = config_mgr.load_config("1234")
-
-    await client.open_ble()
-
-    if saved_config:
-        # Use saved configuration
-        print("Using saved COHN configuration")
-        await client.apply_cohn_config(saved_config)
-    else:
-        # First time setup
-        print("Configuring COHN for the first time")
-        config = await client.configure_cohn(
-            ssid="your-wifi",
-            password="password"
-        )
-        # Save for future use
-        config_mgr.save_config("1234", config)
-
-    await client.wait_cohn_ready()
+    # Subsequent connections: saved credentials are reused automatically
+    async with GoProClient(
+        "1234",
+        offline_mode=False,
+    ) as client:
+        print("Connected using saved COHN credentials!")
 ```
 
 ### Managing Multiple Camera Configs
 
 ```python
-from gopro_sdk import CohnConfigManager
+from gopro_sdk import CohnConfigManager, CohnCredentials
 
 def manage_camera_configs():
     """Manage configurations for multiple cameras."""
-    config_mgr = CohnConfigManager()
+    with CohnConfigManager() as config_mgr:
+        # List all saved configurations
+        all_creds = config_mgr.list_all()
+        print(f"Found {len(all_creds)} saved configurations")
 
-    # List all saved configurations
-    configs = config_mgr.list_configs()
-    print(f"Found {len(configs)} saved configurations")
+        for serial, creds in all_creds.items():
+            print(f"Camera {serial}: IP {creds.ip_address}")
 
-    for identifier in configs:
-        config = config_mgr.load_config(identifier)
-        print(f"Camera {identifier}: {config.ssid}")
+        # Load specific camera credentials
+        creds = config_mgr.load("1234")
+        if creds:
+            print(f"Camera 1234: {creds.ip_address}")
 
-    # Delete old configuration
-    config_mgr.delete_config("old_camera_id")
+        # Delete old configuration
+        config_mgr.delete("old_camera_id")
 ```
 
-### Custom Cache Directory
+### Custom Database Path
 
 ```python
 from gopro_sdk import CohnConfigManager
 from pathlib import Path
 
-# Use custom directory for config storage
-custom_dir = Path.home() / ".gopro_configs"
-config_mgr = CohnConfigManager(cache_dir=custom_dir)
+# Use custom path for credential storage
+custom_path = Path.home() / ".gopro" / "cohn_credentials.json"
+config_mgr = CohnConfigManager(db_path=custom_path)
 ```

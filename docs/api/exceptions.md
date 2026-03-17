@@ -46,23 +46,19 @@ from gopro_sdk import GoProClient
 from gopro_sdk.exceptions import (
     BleConnectionError,
     HttpConnectionError,
-    CohnConfigError,
+    CohnConfigurationError,
 )
 
 async def safe_connection():
     """Handle connection errors gracefully."""
-    client = GoProClient(identifier="1234")
+    client = GoProClient("1234", offline_mode=False)
 
     try:
-        await client.open_ble()
+        await client.open(wifi_ssid="your-wifi", wifi_password="password")
     except BleConnectionError as e:
         print(f"Failed to connect via BLE: {e}")
         return
-
-    try:
-        await client.configure_cohn("wifi", "password")
-        await client.wait_cohn_ready()
-    except CohnConfigError as e:
+    except CohnConfigurationError as e:
         print(f"COHN configuration failed: {e}")
         await client.close()
         return
@@ -79,112 +75,102 @@ async def safe_connection():
 ### Retry Logic
 
 ```python
-async def connect_with_retry(
-    client: GoProClient,
-    max_retries: int = 3
-):
+import asyncio
+from gopro_sdk import GoProClient
+from gopro_sdk.exceptions import BleConnectionError
+
+async def connect_with_retry(target: str, max_retries: int = 3):
     """Connect with automatic retry on failure."""
-    from gopro_sdk.exceptions import BleConnectionError
+    client = GoProClient(target)
 
     for attempt in range(max_retries):
         try:
-            await client.open_ble()
+            await client.open()
             print(f"Connected on attempt {attempt + 1}")
-            return True
+            return client
         except BleConnectionError as e:
             print(f"Attempt {attempt + 1} failed: {e}")
             if attempt < max_retries - 1:
                 await asyncio.sleep(2 ** attempt)  # Exponential backoff
             else:
                 print("Max retries reached")
-                return False
+                return None
 ```
 
 ### Multi-Camera Error Handling
 
 ```python
+import asyncio
 from gopro_sdk import MultiCameraManager
-from gopro_sdk.exceptions import GoproSdkError
+from gopro_sdk.exceptions import CustomGoProError
 
 async def robust_multi_camera():
     """Handle errors in multi-camera scenarios."""
-    manager = MultiCameraManager()
-    cameras = {
-        "cam1": "1234",
-        "cam2": "5678",
-        "cam3": "9012",
-    }
+    async with MultiCameraManager(
+        camera_ids=["1234", "5678", "9012"],
+    ) as manager:
+        # connect_all returns per-camera results (doesn't raise)
+        results = await manager.connect_all()
 
-    # Track failed cameras
-    failed = []
+        # Check which cameras failed
+        failed = manager.get_failed_cameras()
+        connected = manager.get_connected_cameras()
 
-    try:
-        await manager.connect_all(cameras, "wifi", "password")
-    except GoproSdkError as e:
-        print(f"Some cameras failed to connect: {e}")
+        if failed:
+            print(f"Failed cameras: {', '.join(failed)}")
 
-        # Check individual camera status
-        for cam_id, client in manager.clients.items():
-            if client is None:
-                failed.append(cam_id)
+        # Execute commands only on connected cameras
+        if connected:
+            results = await manager.execute_all(
+                lambda c: c.start_recording(),
+                camera_ids=connected,
+            )
+            for cam_id, (success, result) in results.items():
+                if not success:
+                    print(f"Camera {cam_id} command failed: {result}")
 
-    if failed:
-        print(f"Failed cameras: {', '.join(failed)}")
-        # Continue with successfully connected cameras
-
-    # Execute commands only on connected cameras
-    try:
-        await manager.execute_all("set_shutter", on=True)
-    except GoproSdkError as e:
-        print(f"Command execution error: {e}")
+asyncio.run(robust_multi_camera())
 ```
 
 ### Context Manager Pattern
 
 ```python
-from contextlib import asynccontextmanager
+import asyncio
 from gopro_sdk import GoProClient
-from gopro_sdk.exceptions import GoproSdkError
+from gopro_sdk.exceptions import CustomGoProError
 
-@asynccontextmanager
-async def gopro_session(identifier: str):
-    """Safe camera session with automatic cleanup."""
-    client = GoProClient(identifier=identifier)
-
-    try:
-        await client.open_ble()
-        yield client
-    except GoproSdkError as e:
-        print(f"Session error: {e}")
-        raise
-    finally:
-        await client.close()
-
-# Usage
 async def main():
-    async with gopro_session("1234") as camera:
-        await camera.set_shutter(on=True)
-        await asyncio.sleep(5)
-        await camera.set_shutter(on=False)
+    """GoProClient supports async context manager for automatic cleanup."""
+    try:
+        async with GoProClient("1234") as client:
+            await client.start_recording()
+            await asyncio.sleep(5)
+            await client.stop_recording()
+    except CustomGoProError as e:
+        print(f"SDK error: {e}")
+
+asyncio.run(main())
 ```
 
 ## Exception Hierarchy
 
 ```
-GoproSdkError (base)
+CustomGoProError (base)
 ├── BleConnectionError
+│   └── BleTimeoutError
 ├── HttpConnectionError
-├── BleCommandError
-├── HttpCommandError
-└── CohnConfigError
+├── CohnNotConfiguredError
+└── CohnConfigurationError
 ```
 
-All exceptions inherit from `GoproSdkError`, allowing you to catch all SDK errors with a single handler:
+All exceptions inherit from `CustomGoProError`, allowing you to catch all SDK errors with a single handler:
 
 ```python
+from gopro_sdk.exceptions import CustomGoProError
+
 try:
-    await client.open_ble()
-    await client.configure_cohn("wifi", "password")
-except GoproSdkError as e:
+    async with GoProClient("1234", offline_mode=False) as client:
+        await client.start_recording()
+except CustomGoProError as e:
     print(f"SDK error occurred: {e}")
 ```

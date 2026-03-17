@@ -259,7 +259,7 @@ async def delete_oldest():
         print(f"Deleting: {oldest.filename}")
 
         await client.delete_file(oldest.filename)
-        print("Deleted successfully"))
+        print("Deleted successfully")
 
 if __name__ == "__main__":
     asyncio.run(delete_oldest())
@@ -347,16 +347,18 @@ async def multi_camera_with_status():
     ) as manager:
         await manager.connect_all()
 
-        # Get status for all cameras
-        statuses = manager.get_camera_status()
-        for camera_id, status in statuses.items():
-            print(f"Camera {camera_id}: connected={status.is_connected}")
+        # Get overall manager status
+        status = manager.get_manager_status()
+        print(f"Connected: {status['connected_cameras']}/{status['total_cameras']}")
 
-        # Execute with error handling
-        results = await manager.execute_all(
-            lambda c: c.start_recording(),
-            ignore_errors=True
-        )
+        # Get individual camera status
+        for cam_id in manager.camera_ids:
+            cam_status = manager.get_camera_status(cam_id)
+            if cam_status:
+                print(f"Camera {cam_id}: connected={cam_status.is_connected}")
+
+        # Execute with per-camera error tracking
+        results = await manager.execute_all(lambda c: c.start_recording())
 
         for camera_id, (success, result) in results.items():
             if success:
